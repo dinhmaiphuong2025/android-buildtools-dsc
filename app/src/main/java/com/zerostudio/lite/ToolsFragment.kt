@@ -14,6 +14,7 @@ class ToolsFragment : Fragment() {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
+    private var mediator: TabLayoutMediator? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,8 +39,15 @@ class ToolsFragment : Fragment() {
             }
         }
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+        mediator = TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = categories[position].title
-        }.attach()
+        }
+        mediator?.attach()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mediator?.detach()
+        mediator = null
     }
 }

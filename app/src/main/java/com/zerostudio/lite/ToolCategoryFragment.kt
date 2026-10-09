@@ -60,22 +60,30 @@ class ToolCategoryFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        adapter.notifyDataSetChanged()
+        if (::adapter.isInitialized) {
+            adapter.notifyDataSetChanged()
+        }
     }
 
     private fun performInstall(tool: ToolItem) {
         tool.status = ToolStatus.DOWNLOADING
         tool.progress = 0
-        adapter.notifyDataSetChanged()
+        if (::adapter.isInitialized) {
+            adapter.notifyDataSetChanged()
+        }
 
-        val appContext = requireContext().applicationContext
+        val appContext = context?.applicationContext ?: return
         lifecycleScope.launch(Dispatchers.IO) {
             val success = InstallerEngine.installTool(
                 context = appContext,
                 tool = tool,
                 onProgress = { p ->
                     tool.progress = p
-                    lifecycleScope.launch(Dispatchers.Main) { adapter.notifyDataSetChanged() }
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        if (::adapter.isInitialized) {
+                            adapter.notifyDataSetChanged()
+                        }
+                    }
                 },
                 onLog = { msg ->
                     lifecycleScope.launch { ToolRepository.emitLog(msg) }
@@ -84,18 +92,23 @@ class ToolCategoryFragment : Fragment() {
 
             tool.status = if (success) ToolStatus.INSTALLED else ToolStatus.NOT_INSTALLED
             lifecycleScope.launch(Dispatchers.Main) {
-                adapter.notifyDataSetChanged()
+                if (::adapter.isInitialized) {
+                    adapter.notifyDataSetChanged()
+                }
             }
         }
     }
 
     private fun performDelete(tool: ToolItem) {
+        val filesDir = context?.filesDir ?: return
         lifecycleScope.launch(Dispatchers.IO) {
-            val ok = InstallerEngine.deleteTool(requireContext().filesDir, tool)
-            val msg = if (ok) ">> Đã xóa ${tool.title}" else "!! Không thể xóa ${tool.title}"
+            val ok = InstallerEngine.deleteTool(filesDir, tool)
+            val msg = if (ok) ">> Removed ${tool.title}" else "!! Failed to remove ${tool.title}"
             ToolRepository.emitLog(msg)
             lifecycleScope.launch(Dispatchers.Main) {
-                adapter.notifyDataSetChanged()
+                if (::adapter.isInitialized) {
+                    adapter.notifyDataSetChanged()
+                }
             }
         }
     }

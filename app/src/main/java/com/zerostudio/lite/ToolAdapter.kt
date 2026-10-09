@@ -35,6 +35,7 @@ class ToolAdapter(
 
     override fun onBindViewHolder(holder: ToolViewHolder, position: Int) {
         val tool = tools[position]
+        val context = holder.itemView.context
         holder.tvTitle.text = tool.title
         holder.tvDesc.text = tool.description
         holder.tvSize.text = tool.sizeText
@@ -43,8 +44,9 @@ class ToolAdapter(
 
         when (tool.status) {
             ToolStatus.DOWNLOADING, ToolStatus.EXTRACTING -> {
-                holder.chipStatus.text = "Đang xử lý ${tool.progress}%"
-                holder.chipStatus.setChipBackgroundColorResource(R.color.md_theme_light_primaryContainer)
+                holder.chipStatus.text = "Processing ${tool.progress}%"
+                holder.chipStatus.setChipBackgroundColorResource(R.color.status_processing_bg)
+                holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_processing_text))
                 holder.progress.visibility = View.VISIBLE
                 holder.progress.isIndeterminate = (tool.progress == 0)
                 if (tool.progress > 0) {
@@ -57,14 +59,16 @@ class ToolAdapter(
                 holder.progress.visibility = View.GONE
                 holder.btnAction.isEnabled = true
                 if (installed) {
-                    holder.chipStatus.text = "Đã cài đặt"
-                    holder.chipStatus.setChipBackgroundColorResource(R.color.md_theme_light_primaryContainer)
-                    holder.btnAction.text = "Cài lại"
+                    holder.chipStatus.text = "Installed"
+                    holder.chipStatus.setChipBackgroundColorResource(R.color.status_installed_bg)
+                    holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_installed_text))
+                    holder.btnAction.text = "Reinstall"
                     holder.btnDelete.visibility = View.VISIBLE
                 } else {
-                    holder.chipStatus.text = "Chưa cài đặt"
-                    holder.chipStatus.setChipBackgroundColorResource(android.R.color.transparent)
-                    holder.btnAction.text = "Cài đặt"
+                    holder.chipStatus.text = "Not Installed"
+                    holder.chipStatus.setChipBackgroundColorResource(R.color.status_uninstalled_bg)
+                    holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_uninstalled_text))
+                    holder.btnAction.text = "Install"
                     holder.btnDelete.visibility = View.GONE
                 }
             }

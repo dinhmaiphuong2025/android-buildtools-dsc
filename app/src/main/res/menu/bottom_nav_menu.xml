@@ -3,9 +3,9 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_terminal"
-        android:title="Bảng điều khiển" />
+        android:title="Dashboard" />
     <item
         android:id="@+id/nav_tools"
         android:icon="@drawable/ic_build"
-        android:title="Gói công cụ" />
+        android:title="Tool Packages" />
 </menu>

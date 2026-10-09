@@ -101,7 +101,7 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
                 cmd.add("-Pandroid.aapt2FromMavenOverride=${aapt2Bin.absolutePath}")
             }
 
-            logBoth(">> [Daemon] Nhận yêu cầu build: ${projectDir.absolutePath}", logBuffer)
+            logBoth(">> [Daemon] Received build request: ${projectDir.absolutePath}", logBuffer)
             logBoth(">> Tasks: ${tasks.joinToString(" ")}", logBuffer)
 
             val pb = ProcessBuilder(cmd)
@@ -139,10 +139,10 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             exitCode = process.waitFor()
             lastLogs = logBuffer.toString()
 
-            logBoth(">> [Daemon] Kết thúc build với mã: $exitCode", logBuffer)
+            logBoth(">> [Daemon] Build exited with code: $exitCode", logBuffer)
 
         } catch (e: Exception) {
-            logBoth("!! [Daemon] Ngoại lệ khi build: ${e.message}", logBuffer)
+            logBoth("!! [Daemon] Exception during build: ${e.message}", logBuffer)
             lastLogs = logBuffer.toString()
             return JSONObject().apply {
                 put("success", false)

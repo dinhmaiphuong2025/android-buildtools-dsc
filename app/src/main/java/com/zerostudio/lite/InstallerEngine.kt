@@ -20,8 +20,8 @@ object InstallerEngine {
         val targetDir = File(filesDir, tool.targetDirName)
         targetDir.mkdirs()
 
-        onLog(">> Bắt đầu thiết lập: ${tool.title}")
-        onLog(">> Thư mục đích: ${targetDir.absolutePath}")
+        onLog(">> Preparing tool: ${tool.title}")
+        onLog(">> Target location: ${targetDir.absolutePath}")
 
         if (tool.archiveType == ArchiveType.ASSET_COPY) {
             return@withContext try {
@@ -33,17 +33,17 @@ object InstallerEngine {
                     }
                 }
                 destFile.setExecutable(true, false)
-                onLog(">> Đã trích xuất ${tool.title} thành công!")
+                onLog(">> Successfully extracted ${tool.title}!")
                 true
             } catch (e: Exception) {
-                onLog("!! Lỗi trích xuất asset: ${e.message}")
+                onLog("!! Asset extraction failed: ${e.message}")
                 false
             }
         }
 
         val tempFile = File(context.cacheDir, "pkg_${tool.id}_${System.currentTimeMillis()}")
         try {
-            onLog(">> Đang kết nối tải về từ: ${tool.downloadUrl}")
+            onLog(">> Connecting to download source: ${tool.downloadUrl}")
             val url = URL(tool.downloadUrl)
             val conn = url.openConnection() as HttpURLConnection
             conn.connectTimeout = 20000
@@ -51,7 +51,7 @@ object InstallerEngine {
             conn.connect()
 
             if (conn.responseCode !in 200..299) {
-                onLog("!! Lỗi HTTP: ${conn.responseCode} - ${conn.responseMessage}")
+                onLog("!! HTTP Error: ${conn.responseCode} - ${conn.responseMessage}")
                 return@withContext false
             }
 
@@ -76,7 +76,7 @@ object InstallerEngine {
                     }
                 }
             }
-            onLog(">> Đã tải xong (${downloaded / (1024 * 1024)} MB). Bắt đầu giải nén...")
+            onLog(">> Download complete (${downloaded / (1024 * 1024)} MB). Extracting archive...")
 
             // Extract archive
             val extractSuccess = when (tool.archiveType) {
@@ -89,17 +89,16 @@ object InstallerEngine {
             tempFile.delete()
 
             if (extractSuccess) {
-                // Ensure executable permissions
                 makeExecutables(targetDir)
-                onLog(">> Cài đặt hoàn tất: ${tool.title}!")
+                onLog(">> Installation finished: ${tool.title}!")
                 return@withContext true
             } else {
-                onLog("!! Giải nén thất bại cho ${tool.title}")
+                onLog("!! Extraction failed for ${tool.title}")
                 return@withContext false
             }
 
         } catch (e: Exception) {
-            onLog("!! Lỗi trong quá trình cài đặt: ${e.message}")
+            onLog("!! Installation error: ${e.message}")
             tempFile.delete()
             return@withContext false
         }
@@ -125,7 +124,7 @@ object InstallerEngine {
             }
             true
         } catch (e: Exception) {
-            onLog("!! Lỗi giải nén ZIP: ${e.message}")
+            onLog("!! ZIP extraction error: ${e.message}")
             false
         }
     }
@@ -145,12 +144,12 @@ object InstallerEngine {
             val reader = BufferedReader(InputStreamReader(proc.inputStream))
             var line: String?
             while (reader.readLine().also { line = it } != null) {
-                // Keep output bounded
+                // Read lines to prevent stream block
             }
             val code = proc.waitFor()
             code == 0
         } catch (e: Exception) {
-            onLog("!! Lỗi gọi tar: ${e.message}")
+            onLog("!! Tar command error: ${e.message}")
             false
         }
     }

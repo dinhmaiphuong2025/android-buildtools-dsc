@@ -59,8 +59,16 @@ class DashboardFragment : Fragment() {
         updateStatusSummary()
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            updateStatusSummary()
+        }
+    }
+
     private fun updateStatusSummary() {
-        val filesDir = requireContext().filesDir
+        val context = context ?: return
+        val filesDir = context.filesDir
         val javaOk = File(filesDir, "usr/opt/openjdk-17/bin/java").exists()
         val aapt2Ok = File(filesDir, "android-sdk/build-tools/36.0.0/aapt2").exists()
         val sdk35Ok = File(filesDir, "android-sdk/platforms/android-35/android.jar").exists()
@@ -72,6 +80,6 @@ class DashboardFragment : Fragment() {
         statusList.add(if (sdk35Ok) "SDK35 ✓" else "SDK35 ✗")
         if (ndkOk) statusList.add("NDK r29 ✓")
 
-        tvToolchainSummary.text = "Trạng thái công cụ: " + statusList.joinToString(" | ")
+        tvToolchainSummary.text = "Toolchain Status: " + statusList.joinToString(" | ")
     }
 }

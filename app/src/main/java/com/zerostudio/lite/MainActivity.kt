@@ -4,18 +4,16 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var bottomNav: BottomNavigationView
-    private val dashboardFragment = DashboardFragment()
-    private val toolsFragment = ToolsFragment()
+    private val TAG_DASHBOARD = "tag_dashboard"
+    private val TAG_TOOLS = "tag_tools"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,20 +25,32 @@ class MainActivity : AppCompatActivity() {
         autoExtractBundledAapt2()
 
         if (savedInstanceState == null) {
+            val dashboard = DashboardFragment()
+            val tools = ToolsFragment()
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, dashboardFragment)
+                .add(R.id.fragmentContainer, dashboard, TAG_DASHBOARD)
+                .add(R.id.fragmentContainer, tools, TAG_TOOLS)
+                .hide(tools)
                 .commit()
         }
 
         bottomNav.setOnItemSelectedListener { item ->
-            val fragment: Fragment = when (item.itemId) {
-                R.id.nav_home -> dashboardFragment
-                R.id.nav_tools -> toolsFragment
-                else -> dashboardFragment
+            val fm = supportFragmentManager
+            val dashboard = fm.findFragmentByTag(TAG_DASHBOARD)
+            val tools = fm.findFragmentByTag(TAG_TOOLS)
+
+            val tx = fm.beginTransaction()
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    if (tools != null) tx.hide(tools)
+                    if (dashboard != null) tx.show(dashboard)
+                }
+                R.id.nav_tools -> {
+                    if (dashboard != null) tx.hide(dashboard)
+                    if (tools != null) tx.show(tools)
+                }
             }
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, fragment)
-                .commit()
+            tx.commit()
             true
         }
     }

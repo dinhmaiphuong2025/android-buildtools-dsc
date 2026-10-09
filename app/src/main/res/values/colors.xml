@@ -12,7 +12,12 @@
 
     <color name="terminal_bg">#181A1F</color>
     <color name="terminal_text">#98C379</color>
-    <color name="status_green">#4CAF50</color>
-    <color name="status_orange">#FF9800</color>
-    <color name="status_gray">#757575</color>
+
+    <!-- Standard Material 3 Status Colors -->
+    <color name="status_installed_bg">#D4EDDA</color>
+    <color name="status_installed_text">#155724</color>
+    <color name="status_processing_bg">#FFF3CD</color>
+    <color name="status_processing_text">#856404</color>
+    <color name="status_uninstalled_bg">#E9ECEF</color>
+    <color name="status_uninstalled_text">#495057</color>
 </resources>

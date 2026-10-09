@@ -23,13 +23,15 @@
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="96dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="96dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="10dp"
         android:layout_gravity="bottom"
         app:menu="@menu/bottom_nav_menu"
         app:labelVisibilityMode="labeled" />

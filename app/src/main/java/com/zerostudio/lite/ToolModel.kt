@@ -17,7 +17,7 @@ enum class ArchiveType {
 }
 
 enum class ToolCategory(val title: String) {
-    COMPILER("Biên dịch (Core)"),
+    COMPILER("Compiler (Core)"),
     PLATFORMS("SDK Platforms"),
     NATIVE("Native C/C++")
 }
