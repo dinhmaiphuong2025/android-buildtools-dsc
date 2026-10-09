@@ -26,17 +26,80 @@
         android:layout_marginBottom="116dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        style="@style/FloatingBottomNavStyle"
+    <!-- Custom Floating Navigation Bar -->
+    <LinearLayout
+        android:id="@+id/customBottomBar"
         android:layout_width="match_parent"
-        android:layout_height="68dp"
+        android:layout_height="64dp"
         android:layout_gravity="bottom"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="36dp"
-        android:background="@drawable/floating_bottom_nav_bg"
-        app:menu="@menu/bottom_nav_menu"
-        app:labelVisibilityMode="labeled" />
+        android:background="@drawable/floating_bottom_bar_bg"
+        android:elevation="8dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <!-- Tab 1: Dashboard -->
+        <LinearLayout
+            android:id="@+id/btnNavHome"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/ivNavHome"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_terminal"
+                app:tint="?attr/colorPrimary" />
+
+            <TextView
+                android:id="@+id/tvNavHome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Dashboard"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary" />
+        </LinearLayout>
+
+        <!-- Tab 2: Tool Packages -->
+        <LinearLayout
+            android:id="@+id/btnNavTools"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/ivNavTools"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_build"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/tvNavTools"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Tool Packages"
+                android:textSize="13sp"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
