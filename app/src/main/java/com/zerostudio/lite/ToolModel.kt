@@ -45,6 +45,8 @@ data class ToolItem(
         if (id == "ndk_29") {
             val oldNdk = File(baseFilesDir, "android-sdk/ndk/29.0.14033849/source.properties")
             if (oldNdk.exists()) return true
+            val nestedZipNdk = File(baseFilesDir, "android-sdk/ndk/29.0.13113456/android-ndk-r29-beta1/source.properties")
+            if (nestedZipNdk.exists()) return true
         }
         return false
     }

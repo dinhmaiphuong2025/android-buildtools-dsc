@@ -84,7 +84,10 @@ object InstallerEngine {
 
             // Extract archive
             val extractSuccess = when (tool.archiveType) {
-                ArchiveType.ZIP -> extractZip(tempFile, targetDir, onLog)
+                ArchiveType.ZIP -> {
+                    val strip = if (tool.id == "ndk_29") 1 else 0
+                    extractZip(tempFile, targetDir, strip, onLog)
+                }
                 ArchiveType.TAR_GZ -> extractTarGz(tempFile, targetDir, stripPaths = 1, onLog)
                 ArchiveType.TAR_XZ -> {
                     val strip = if (tool.id == "build_tools_36") 2 else 0
@@ -111,18 +114,24 @@ object InstallerEngine {
         }
     }
 
-    private fun extractZip(zipFile: File, targetDir: File, onLog: (String) -> Unit): Boolean {
+    private fun extractZip(zipFile: File, targetDir: File, stripPaths: Int, onLog: (String) -> Unit): Boolean {
         return try {
             ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
-                    val newFile = File(targetDir, entry.name)
-                    if (entry.isDirectory) {
-                        newFile.mkdirs()
-                    } else {
-                        newFile.parentFile?.mkdirs()
-                        FileOutputStream(newFile).use { fos ->
-                            zis.copyTo(fos)
+                    val relativeName = stripPathSegments(entry.name, stripPaths)
+                    if (relativeName.isNotEmpty()) {
+                        val newFile = File(targetDir, relativeName)
+                        if (entry.isDirectory) {
+                            newFile.mkdirs()
+                        } else {
+                            newFile.parentFile?.mkdirs()
+                            FileOutputStream(newFile).use { fos ->
+                                zis.copyTo(fos)
+                            }
+                            if (newFile.name.endsWith(".sh") || newFile.name in listOf("clang", "clang++", "make", "ndk-build", "ndk-which", "ndk-gdb")) {
+                                newFile.setExecutable(true, false)
+                            }
                         }
                     }
                     zis.closeEntry()
