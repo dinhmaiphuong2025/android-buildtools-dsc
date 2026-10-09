@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="BottomNavTextActive" parent="TextAppearance.Material3.LabelMedium">
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:includeFontPadding">false</item>
         <item name="android:textStyle">bold</item>
     </style>
 
     <style name="BottomNavTextInactive" parent="TextAppearance.Material3.LabelMedium">
-        <item name="android:textSize">11sp</item>
+        <item name="android:textSize">12sp</item>
         <item name="android:includeFontPadding">false</item>
     </style>
 
     <style name="FloatingBottomNavStyle" parent="Widget.Material3.BottomNavigationView">
-        <item name="elevation">6dp</item>
-        <item name="itemIconSize">22dp</item>
+        <item name="elevation">8dp</item>
+        <item name="itemIconSize">24dp</item>
+        <item name="itemIconTint">@color/nav_item_icon_tint</item>
+        <item name="itemTextColor">@color/nav_item_text_color</item>
         <item name="itemActiveIndicatorStyle">@style/FloatingNavActiveIndicator</item>
         <item name="itemTextAppearanceActive">@style/BottomNavTextActive</item>
         <item name="itemTextAppearanceInactive">@style/BottomNavTextInactive</item>
     </style>
 
     <style name="FloatingNavActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:width">56dp</item>
-        <item name="android:height">30dp</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:width">0dp</item>
+        <item name="android:height">0dp</item>
     </style>
 </resources>
