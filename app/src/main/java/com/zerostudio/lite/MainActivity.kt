@@ -3,122 +3,191 @@ package com.zerostudio.lite
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.Button
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.chip.Chip
 import kotlinx.coroutines.*
-import org.json.JSONObject
 import java.io.File
-import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var tvStatus: TextView
     private lateinit var tvLogs: TextView
-    private lateinit var btnInstall: Button
+    private lateinit var scrollLogs: ScrollView
+    private lateinit var chipDaemonStatus: Chip
+    private lateinit var rvTools: RecyclerView
+    private lateinit var adapter: ToolAdapter
+
     private val scope = CoroutineScope(Dispatchers.Main + Job())
+    private val toolList = mutableListOf<ToolItem>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        tvStatus = findViewById(R.id.tvStatus)
         tvLogs = findViewById(R.id.tvLogs)
-        btnInstall = findViewById(R.id.btnInstallTools)
+        scrollLogs = findViewById(R.id.scrollLogs)
+        chipDaemonStatus = findViewById(R.id.chipDaemonStatus)
+        rvTools = findViewById(R.id.rvTools)
 
-        extractBundledAapt2()
+        initToolList()
+        setupRecyclerView()
+        startDaemonService()
 
-        val serviceIntent = Intent(this, BuilderDaemonService::class.java)
+        // Auto-extract bundled AAPT2 if needed
+        val aapt2Tool = toolList.firstOrNull { it.id == "aapt2_bundled" }
+        if (aapt2Tool != null && !aapt2Tool.isInstalled(filesDir)) {
+            performInstall(aapt2Tool)
+        }
+    }
+
+    private fun initToolList() {
+        toolList.clear()
+        toolList.add(
+            ToolItem(
+                id = "aapt2_bundled",
+                title = "AAPT2 ARM64 (Tích hợp)",
+                description = "Binary aapt2 arm64 được đóng gói sẵn trong APK, dùng để ghi đè AAPT2 của Maven.",
+                sizeText = "Dung lượng: ~6 MB (có sẵn)",
+                downloadUrl = "aapt2-arm64-v8a",
+                archiveType = ArchiveType.ASSET_COPY,
+                targetDirName = "android-sdk/build-tools/36.0.0",
+                verifyRelativePath = "android-sdk/build-tools/36.0.0/aapt2"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "jdk17",
+                title = "OpenJDK 17 (arm64)",
+                description = "Môi trường JVM bắt buộc để thực thi Gradle Wrapper và tác vụ biên dịch mã nguồn.",
+                sizeText = "Dung lượng: ~190 MB (nén) -> ~320 MB (cài đặt)",
+                downloadUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.14%2B7/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.14_7.tar.gz",
+                archiveType = ArchiveType.TAR_GZ,
+                targetDirName = "usr/opt/openjdk-17",
+                verifyRelativePath = "usr/opt/openjdk-17/bin/java"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "platform_35",
+                title = "Android SDK Platform 35 (Android 15)",
+                description = "Cung cấp android.jar API 35 cho các dự án thiết lập compileSdk 35.",
+                sizeText = "Dung lượng: ~64 MB (nén) -> ~150 MB (cài đặt)",
+                downloadUrl = "https://dl.google.com/android/repository/platform-35_r02.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/platforms",
+                verifyRelativePath = "android-sdk/platforms/android-35/android.jar"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "platform_34",
+                title = "Android SDK Platform 34 (Android 14)",
+                description = "Cung cấp android.jar API 34 cho các dự án compileSdk 34.",
+                sizeText = "Dung lượng: ~63 MB (nén) -> ~145 MB (cài đặt)",
+                downloadUrl = "https://dl.google.com/android/repository/platform-34-ext7_r03.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/platforms",
+                verifyRelativePath = "android-sdk/platforms/android-34/android.jar"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "build_tools_36",
+                title = "Build-Tools 36.0.0 (arm64)",
+                description = "Trọn bộ d8, zipalign, aidl native arm64 trích xuất từ ZeroStudio toolchain.",
+                sizeText = "Dung lượng: ~16 MB (nén) -> ~80 MB (cài đặt)",
+                downloadUrl = "https://github.com/msmt2018/SDK-tool-for-Android-platform/releases/download/36.0.0/build-tools_36.0.0_aarch64.tar.xz",
+                archiveType = ArchiveType.TAR_XZ,
+                targetDirName = "android-sdk/build-tools/36.0.0",
+                verifyRelativePath = "android-sdk/build-tools/36.0.0/zipalign"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "ndk_29",
+                title = "Android NDK r29 (arm64)",
+                description = "Bộ công cụ Clang/Sysroot arm64 dùng cho các dự án có mã nguồn C/C++ native (Tùy chọn).",
+                sizeText = "Dung lượng: ~170 MB (nén) -> ~1.8 GB (cài đặt)",
+                downloadUrl = "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r29/android-ndk-r29-aarch64-linux-android.tar.xz",
+                archiveType = ArchiveType.TAR_XZ,
+                targetDirName = "android-sdk/ndk/29.0.14033849",
+                verifyRelativePath = "android-sdk/ndk/29.0.14033849/source.properties"
+            )
+        )
+        toolList.add(
+            ToolItem(
+                id = "cmake_326",
+                title = "CMake 3.26.0 (arm64)",
+                description = "Công cụ dựng dự án Native CMake phối hợp cùng NDK (Tùy chọn).",
+                sizeText = "Dung lượng: ~15 MB (nén) -> ~60 MB (cài đặt)",
+                downloadUrl = "https://github.com/AndroidIDEOfficial/androidide-tools/releases/download/v3.26.0/cmake-3.26.0-aarch64.tar.xz",
+                archiveType = ArchiveType.TAR_XZ,
+                targetDirName = "android-sdk/cmake/3.26.0",
+                verifyRelativePath = "android-sdk/cmake/3.26.0/bin/cmake"
+            )
+        )
+    }
+
+    private fun setupRecyclerView() {
+        rvTools.layoutManager = LinearLayoutManager(this)
+        adapter = ToolAdapter(
+            tools = toolList,
+            filesDir = filesDir,
+            onActionClick = { tool -> performInstall(tool) },
+            onDeleteClick = { tool -> performDelete(tool) }
+        )
+        rvTools.adapter = adapter
+    }
+
+    private fun startDaemonService() {
+        val intent = Intent(this, BuilderDaemonService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
+            startForegroundService(intent)
         } else {
-            startService(serviceIntent)
+            startService(intent)
         }
-        tvStatus.text = "Daemon sẵn sàng tại http://127.0.0.1:8088"
-
-        btnInstall.setOnClickListener {
-            startBuildToolsDownload()
-        }
+        chipDaemonStatus.text = "Đang chạy"
     }
 
-    private fun log(msg: String) {
+    private fun log(message: String) {
         scope.launch {
-            tvLogs.append("$msg\n")
+            tvLogs.append("$message\n")
+            scrollLogs.post { scrollLogs.fullScroll(ScrollView.FOCUS_DOWN) }
         }
     }
 
-    private fun extractBundledAapt2() {
-        scope.launch(Dispatchers.IO) {
-            try {
-                val sdkDir = File(filesDir, "android-sdk")
-                val buildToolsDir = File(sdkDir, "build-tools/36.0.0")
-                buildToolsDir.mkdirs()
+    private fun performInstall(tool: ToolItem) {
+        tool.status = ToolStatus.DOWNLOADING
+        tool.progress = 0
+        adapter.notifyDataSetChanged()
 
-                val aapt2File = File(buildToolsDir, "aapt2")
-                if (!aapt2File.exists() || aapt2File.length() == 0L) {
-                    log(">> Đang trích xuất AAPT2 arm64 tích hợp sẵn...")
-                    assets.open("aapt2-arm64-v8a").use { input ->
-                        FileOutputStream(aapt2File).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    aapt2File.setExecutable(true, false)
-                    log(">> AAPT2 arm64 đã sẵn sàng tại: ${aapt2File.absolutePath}")
-                } else {
-                    log(">> AAPT2 arm64 đã tồn tại: ${aapt2File.absolutePath}")
-                }
-            } catch (e: Exception) {
-                log("!! Không thể giải nén AAPT2: ${e.message}")
+        scope.launch(Dispatchers.IO) {
+            val success = InstallerEngine.installTool(
+                context = applicationContext,
+                tool = tool,
+                onProgress = { p ->
+                    tool.progress = p
+                    scope.launch { adapter.notifyDataSetChanged() }
+                },
+                onLog = { msg -> log(msg) }
+            )
+
+            tool.status = if (success) ToolStatus.INSTALLED else ToolStatus.NOT_INSTALLED
+            scope.launch {
+                adapter.notifyDataSetChanged()
             }
         }
     }
 
-    private fun startBuildToolsDownload() {
-        btnInstall.isEnabled = false
-        log(">> Đang truy vấn manifest...")
-
+    private fun performDelete(tool: ToolItem) {
         scope.launch(Dispatchers.IO) {
-            try {
-                val manifestUrl = "https://github.com/msmt2018/SDK-tool-for-Android-platform/releases/download/IDESdkDownJson2.3/manifest.json"
-                val conn = URL(manifestUrl).openConnection() as HttpURLConnection
-                val text = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(text)
-
-                val buildToolsUrl = json.getJSONObject("build_tools").getJSONObject("aarch64").getString("_36_0_0")
-                log(">> URL: $buildToolsUrl")
-
-                val sdkDir = File(filesDir, "android-sdk")
-                val buildToolsDir = File(sdkDir, "build-tools/36.0.0")
-                buildToolsDir.mkdirs()
-
-                val dlFile = File(cacheDir, "build-tools.tar.xz")
-                log(">> Đang tải build-tools (~16MB)...")
-                val dlConn = URL(buildToolsUrl).openConnection() as HttpURLConnection
-                dlConn.inputStream.use { input ->
-                    FileOutputStream(dlFile).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-
-                log(">> Đang giải nén...")
-                val process = Runtime.getRuntime().exec(arrayOf("tar", "-xf", dlFile.absolutePath, "--strip-components=2", "-C", buildToolsDir.absolutePath))
-                process.waitFor()
-                dlFile.delete()
-
-                File(buildToolsDir, "aapt2").setExecutable(true, false)
-                File(buildToolsDir, "zipalign").setExecutable(true, false)
-
-                log(">> Cập nhật Build-Tools 36.0.0 aarch64 hoàn tất!")
-                withContext(Dispatchers.Main) {
-                    btnInstall.isEnabled = true
-                }
-            } catch (e: Exception) {
-                log("!! Lỗi tải build-tools: ${e.message}")
-                withContext(Dispatchers.Main) {
-                    btnInstall.isEnabled = true
-                }
+            val ok = InstallerEngine.deleteTool(filesDir, tool)
+            log(if (ok) ">> Đã xóa ${tool.title}" else "!! Không thể xóa ${tool.title}")
+            scope.launch {
+                adapter.notifyDataSetChanged()
             }
         }
     }

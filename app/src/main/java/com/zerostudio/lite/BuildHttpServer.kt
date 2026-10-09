@@ -19,9 +19,17 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
         if (method == Method.GET && uri == "/status") {
             val json = JSONObject()
             json.put("status", "running")
-            val sdkDir = File(context.filesDir, "android-sdk")
-            val aapt2 = File(sdkDir, "build-tools/36.0.0/aapt2")
-            json.put("aapt2_ready", aapt2.exists() && aapt2.canExecute())
+            val filesDir = context.filesDir
+            val javaBin = File(filesDir, "usr/opt/openjdk-17/bin/java")
+            val aapt2Bin = File(filesDir, "android-sdk/build-tools/36.0.0/aapt2")
+            val sdkDir = File(filesDir, "android-sdk")
+            val ndkDir = File(filesDir, "android-sdk/ndk/29.0.14033849")
+
+            json.put("java_ready", javaBin.exists() && javaBin.canExecute())
+            json.put("aapt2_ready", aapt2Bin.exists() && aapt2Bin.canExecute())
+            json.put("sdk_ready", sdkDir.exists())
+            json.put("ndk_ready", ndkDir.exists())
+
             return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString())
         }
 
@@ -71,8 +79,11 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             }
 
             val filesDir = context.filesDir
+            val javaHome = File(filesDir, "usr/opt/openjdk-17")
             val sdkDir = File(filesDir, "android-sdk")
             val aapt2Bin = File(sdkDir, "build-tools/36.0.0/aapt2")
+            val cmakeDir = File(sdkDir, "cmake/3.26.0/bin")
+            val ndkDir = File(sdkDir, "ndk/29.0.14033849")
 
             val cmd = mutableListOf("sh", gradlew.absolutePath)
             cmd.addAll(tasks.filter { it.isNotBlank() })
@@ -84,10 +95,25 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             pb.directory(projectDir)
             val env = pb.environment()
 
+            var pathEnv = env["PATH"] ?: ""
+
+            if (javaHome.exists()) {
+                env["JAVA_HOME"] = javaHome.absolutePath
+                pathEnv = "${javaHome.absolutePath}/bin:$pathEnv"
+            }
             if (sdkDir.exists()) {
                 env["ANDROID_HOME"] = sdkDir.absolutePath
                 env["ANDROID_SDK_ROOT"] = sdkDir.absolutePath
             }
+            if (ndkDir.exists()) {
+                env["ANDROID_NDK_ROOT"] = ndkDir.absolutePath
+                env["ANDROID_NDK_HOME"] = ndkDir.absolutePath
+            }
+            if (cmakeDir.exists()) {
+                pathEnv = "${cmakeDir.absolutePath}:$pathEnv"
+            }
+
+            env["PATH"] = pathEnv
 
             pb.redirectErrorStream(true)
             val process = pb.start()
