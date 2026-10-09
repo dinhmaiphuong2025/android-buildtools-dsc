@@ -3,6 +3,9 @@ package com.zerostudio.lite
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.tukaani.xz.XZInputStream
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
@@ -81,8 +84,8 @@ object InstallerEngine {
             // Extract archive
             val extractSuccess = when (tool.archiveType) {
                 ArchiveType.ZIP -> extractZip(tempFile, targetDir, onLog)
-                ArchiveType.TAR_GZ -> extractTar(tempFile, targetDir, "--strip-components=1", onLog)
-                ArchiveType.TAR_XZ -> extractTar(tempFile, targetDir, "", onLog)
+                ArchiveType.TAR_GZ -> extractTarGz(tempFile, targetDir, stripPaths = 1, onLog)
+                ArchiveType.TAR_XZ -> extractTarXz(tempFile, targetDir, stripPaths = 0, onLog)
                 else -> true
             }
 
@@ -129,29 +132,73 @@ object InstallerEngine {
         }
     }
 
-    private fun extractTar(tarFile: File, targetDir: File, extraArg: String, onLog: (String) -> Unit): Boolean {
+    private fun extractTarGz(tarFile: File, targetDir: File, stripPaths: Int, onLog: (String) -> Unit): Boolean {
         return try {
-            val cmdList = mutableListOf("tar", "-xf", tarFile.absolutePath)
-            if (extraArg.isNotEmpty()) {
-                cmdList.add(extraArg)
+            FileInputStream(tarFile).use { fis ->
+                BufferedInputStream(fis).use { bis ->
+                    GzipCompressorInputStream(bis).use { gzis ->
+                        TarArchiveInputStream(gzis).use { tarIn ->
+                            extractTarEntries(tarIn, targetDir, stripPaths)
+                        }
+                    }
+                }
             }
-            cmdList.add("-C")
-            cmdList.add(targetDir.absolutePath)
-
-            val pb = ProcessBuilder(cmdList)
-            pb.redirectErrorStream(true)
-            val proc = pb.start()
-            val reader = BufferedReader(InputStreamReader(proc.inputStream))
-            var line: String?
-            while (reader.readLine().also { line = it } != null) {
-                // Read lines to prevent stream block
-            }
-            val code = proc.waitFor()
-            code == 0
+            true
         } catch (e: Exception) {
-            onLog("!! Tar command error: ${e.message}")
+            onLog("!! TAR.GZ extraction error: ${e.message}")
             false
         }
+    }
+
+    private fun extractTarXz(tarFile: File, targetDir: File, stripPaths: Int, onLog: (String) -> Unit): Boolean {
+        return try {
+            FileInputStream(tarFile).use { fis ->
+                BufferedInputStream(fis).use { bis ->
+                    XZInputStream(bis).use { xzis ->
+                        TarArchiveInputStream(xzis).use { tarIn ->
+                            extractTarEntries(tarIn, targetDir, stripPaths)
+                        }
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            onLog("!! TAR.XZ extraction error: ${e.message}")
+            false
+        }
+    }
+
+    private fun extractTarEntries(tarIn: TarArchiveInputStream, targetDir: File, stripPaths: Int) {
+        var entry = tarIn.nextTarEntry
+        val buffer = ByteArray(32768)
+        while (entry != null) {
+            val relativeName = stripPathSegments(entry.name, stripPaths)
+            if (relativeName.isNotEmpty()) {
+                val destFile = File(targetDir, relativeName)
+                if (entry.isDirectory) {
+                    destFile.mkdirs()
+                } else {
+                    destFile.parentFile?.mkdirs()
+                    FileOutputStream(destFile).use { fos ->
+                        var len: Int
+                        while (tarIn.read(buffer).also { len = it } != -1) {
+                            fos.write(buffer, 0, len)
+                        }
+                    }
+                    if ((entry.mode and 0b001_000_000) != 0 || entry.name.endsWith(".sh")) {
+                        destFile.setExecutable(true, false)
+                    }
+                }
+            }
+            entry = tarIn.nextTarEntry
+        }
+    }
+
+    private fun stripPathSegments(path: String, stripCount: Int): String {
+        if (stripCount <= 0) return path
+        val segments = path.split("/").filter { it.isNotEmpty() }
+        if (segments.size <= stripCount) return ""
+        return segments.drop(stripCount).joinToString("/")
     }
 
     private fun makeExecutables(dir: File) {
