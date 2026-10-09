@@ -85,7 +85,10 @@ object InstallerEngine {
             val extractSuccess = when (tool.archiveType) {
                 ArchiveType.ZIP -> extractZip(tempFile, targetDir, onLog)
                 ArchiveType.TAR_GZ -> extractTarGz(tempFile, targetDir, stripPaths = 1, onLog)
-                ArchiveType.TAR_XZ -> extractTarXz(tempFile, targetDir, stripPaths = 0, onLog)
+                ArchiveType.TAR_XZ -> {
+                    val strip = if (tool.id == "build_tools_36") 2 else 0
+                    extractTarXz(tempFile, targetDir, stripPaths = strip, onLog)
+                }
                 else -> true
             }
 

@@ -45,6 +45,26 @@ class ToolsFragment : Fragment() {
         mediator?.attach()
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshPages()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            refreshPages()
+        }
+    }
+
+    private fun refreshPages() {
+        childFragmentManager.fragments.forEach { f ->
+            if (f is ToolCategoryFragment) {
+                f.onResume()
+            }
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         mediator?.detach()

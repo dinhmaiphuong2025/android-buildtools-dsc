@@ -65,6 +65,13 @@ class ToolCategoryFragment : Fragment() {
         }
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && ::adapter.isInitialized) {
+            adapter.notifyDataSetChanged()
+        }
+    }
+
     private fun performInstall(tool: ToolItem) {
         tool.status = ToolStatus.DOWNLOADING
         tool.progress = 0
