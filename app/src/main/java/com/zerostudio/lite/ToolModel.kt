@@ -16,6 +16,12 @@ enum class ArchiveType {
     ASSET_COPY
 }
 
+enum class ToolCategory(val title: String) {
+    COMPILER("Biên dịch (Core)"),
+    PLATFORMS("SDK Platforms"),
+    NATIVE("Native C/C++")
+}
+
 data class ToolItem(
     val id: String,
     val title: String,
@@ -25,6 +31,7 @@ data class ToolItem(
     val archiveType: ArchiveType,
     val targetDirName: String,
     val verifyRelativePath: String,
+    val category: ToolCategory,
     var status: ToolStatus = ToolStatus.NOT_INSTALLED,
     var progress: Int = 0
 ) {

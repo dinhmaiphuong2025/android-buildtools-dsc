@@ -2,6 +2,9 @@ package com.zerostudio.lite
 
 import android.content.Context
 import fi.iki.elonen.NanoHTTPD
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
@@ -65,6 +68,13 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
         return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found")
     }
 
+    private fun logBoth(msg: String, buffer: StringBuilder) {
+        buffer.append(msg).append("\n")
+        CoroutineScope(Dispatchers.Main).launch {
+            ToolRepository.emitLog(msg)
+        }
+    }
+
     private fun executeBuild(projectDir: File, tasks: List<String>): JSONObject {
         val logBuffer = StringBuilder()
         var exitCode = -1
@@ -90,6 +100,9 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             if (aapt2Bin.exists()) {
                 cmd.add("-Pandroid.aapt2FromMavenOverride=${aapt2Bin.absolutePath}")
             }
+
+            logBoth(">> [Daemon] Nhận yêu cầu build: ${projectDir.absolutePath}", logBuffer)
+            logBoth(">> Tasks: ${tasks.joinToString(" ")}", logBuffer)
 
             val pb = ProcessBuilder(cmd)
             pb.directory(projectDir)
@@ -121,13 +134,15 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             var line: String?
             while (reader.readLine().also { line = it } != null) {
-                logBuffer.append(line).append("\n")
+                line?.let { logBoth(it, logBuffer) }
             }
             exitCode = process.waitFor()
             lastLogs = logBuffer.toString()
 
+            logBoth(">> [Daemon] Kết thúc build với mã: $exitCode", logBuffer)
+
         } catch (e: Exception) {
-            logBuffer.append("Exception during build: ${e.message}\n")
+            logBoth("!! [Daemon] Ngoại lệ khi build: ${e.message}", logBuffer)
             lastLogs = logBuffer.toString()
             return JSONObject().apply {
                 put("success", false)
