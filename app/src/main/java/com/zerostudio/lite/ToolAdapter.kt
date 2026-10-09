@@ -1,13 +1,12 @@
 package com.zerostudio.lite
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import java.io.File
 
@@ -21,8 +20,9 @@ class ToolAdapter(
     class ToolViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvTitle: TextView = view.findViewById(R.id.tvToolTitle)
         val tvDesc: TextView = view.findViewById(R.id.tvToolDesc)
-        val tvSize: TextView = view.findViewById(R.id.tvToolSize)
-        val chipStatus: Chip = view.findViewById(R.id.chipStatus)
+        val tvToolSize: TextView = view.findViewById(R.id.tvToolSize)
+        val viewStatusDot: View = view.findViewById(R.id.viewStatusDot)
+        val tvStatusText: TextView = view.findViewById(R.id.tvStatusText)
         val progress: LinearProgressIndicator = view.findViewById(R.id.progressIndicator)
         val btnAction: MaterialButton = view.findViewById(R.id.btnAction)
         val btnDelete: MaterialButton = view.findViewById(R.id.btnDelete)
@@ -35,18 +35,17 @@ class ToolAdapter(
 
     override fun onBindViewHolder(holder: ToolViewHolder, position: Int) {
         val tool = tools[position]
-        val context = holder.itemView.context
         holder.tvTitle.text = tool.title
         holder.tvDesc.text = tool.description
-        holder.tvSize.text = tool.sizeText
+        holder.tvToolSize.text = tool.sizeText
 
         val installed = tool.isInstalled(filesDir)
 
         when (tool.status) {
             ToolStatus.DOWNLOADING, ToolStatus.EXTRACTING -> {
-                holder.chipStatus.text = "Processing ${tool.progress}%"
-                holder.chipStatus.setChipBackgroundColorResource(R.color.status_processing_bg)
-                holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_processing_text))
+                holder.viewStatusDot.setBackgroundResource(R.drawable.dot_processing)
+                holder.tvStatusText.text = "Processing ${tool.progress}%"
+                holder.tvStatusText.setTextColor(Color.parseColor("#F57C00"))
                 holder.progress.visibility = View.VISIBLE
                 holder.progress.isIndeterminate = (tool.progress == 0)
                 if (tool.progress > 0) {
@@ -59,15 +58,15 @@ class ToolAdapter(
                 holder.progress.visibility = View.GONE
                 holder.btnAction.isEnabled = true
                 if (installed) {
-                    holder.chipStatus.text = "Installed"
-                    holder.chipStatus.setChipBackgroundColorResource(R.color.status_installed_bg)
-                    holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_installed_text))
+                    holder.viewStatusDot.setBackgroundResource(R.drawable.dot_installed)
+                    holder.tvStatusText.text = "Installed"
+                    holder.tvStatusText.setTextColor(Color.parseColor("#2E7D32"))
                     holder.btnAction.text = "Reinstall"
                     holder.btnDelete.visibility = View.VISIBLE
                 } else {
-                    holder.chipStatus.text = "Not Installed"
-                    holder.chipStatus.setChipBackgroundColorResource(R.color.status_uninstalled_bg)
-                    holder.chipStatus.setTextColor(ContextCompat.getColor(context, R.color.status_uninstalled_text))
+                    holder.viewStatusDot.setBackgroundResource(R.drawable.dot_uninstalled)
+                    holder.tvStatusText.text = "Not installed"
+                    holder.tvStatusText.setTextColor(Color.parseColor("#757575"))
                     holder.btnAction.text = "Install"
                     holder.btnDelete.visibility = View.GONE
                 }

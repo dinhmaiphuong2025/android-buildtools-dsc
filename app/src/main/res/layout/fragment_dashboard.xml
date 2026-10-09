@@ -11,7 +11,7 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="12dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="2dp"
         app:strokeWidth="1dp"
@@ -23,6 +23,7 @@
             android:orientation="vertical"
             android:padding="14dp">
 
+            <!-- Title & Status Indicator Dot -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -37,56 +38,58 @@
                     android:textAppearance="?attr/textAppearanceTitleMedium"
                     android:textStyle="bold" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDaemonStatus"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Active"
-                    app:chipCornerRadius="8dp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/viewDaemonDot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/dot_active" />
+
+                    <TextView
+                        android:id="@+id/tvDaemonStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="Active"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="#2E7D32"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/tvDaemonEndpoint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Endpoint: http://127.0.0.1:8088"
+                android:layout_marginTop="6dp"
+                android:text="127.0.0.1:8088"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:fontFamily="monospace" />
-
-            <TextView
-                android:id="@+id/tvToolchainSummary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Status: AAPT2 ready | JDK 17 checking..."
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Terminal Header & Actions -->
+    <!-- Terminal Action Header (Only Clear button, no header text) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="6dp"
+        android:gravity="end"
+        android:layout_marginBottom="4dp"
         android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="TERMINAL CONSOLE LOGS"
-            android:textAppearance="?attr/textAppearanceLabelLarge"
-            android:textColor="?attr/colorPrimary"
-            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearLog"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="36dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:textSize="12sp"
             android:text="Clear" />
     </LinearLayout>
 
@@ -112,7 +115,7 @@
                 android:fontFamily="monospace"
                 android:textColor="@color/terminal_text"
                 android:textSize="12sp"
-                android:text="[System] Ready for build commands from container.\n" />
+                android:text="[System] Ready for build commands.\n" />
         </ScrollView>
     </com.google.android.material.card.MaterialCardView>
 

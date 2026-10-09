@@ -24,7 +24,7 @@ class BuilderDaemonService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(101, buildNotification("Daemon đang lắng nghe tại 127.0.0.1:$PORT"))
+        startForeground(101, buildNotification("Daemon listening on 127.0.0.1:$PORT"))
 
         try {
             server = BuildHttpServer(PORT, applicationContext)
