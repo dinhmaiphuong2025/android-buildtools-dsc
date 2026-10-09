@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.tukaani.xz.BasicArrayCache
 import org.tukaani.xz.XZInputStream
 import java.io.*
 import java.net.HttpURLConnection
@@ -157,7 +158,7 @@ object InstallerEngine {
         return try {
             FileInputStream(tarFile).use { fis ->
                 BufferedInputStream(fis).use { bis ->
-                    XZInputStream(bis).use { xzis ->
+                    XZInputStream(bis, BasicArrayCache.getInstance()).use { xzis ->
                         TarArchiveInputStream(xzis).use { tarIn ->
                             extractTarEntries(tarIn, targetDir, stripPaths)
                         }

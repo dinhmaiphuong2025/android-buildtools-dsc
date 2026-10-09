@@ -95,10 +95,10 @@ object ToolRepository {
                 title = "Android NDK r29 (arm64)",
                 description = "Custom Clang/Sysroot toolchain for apps containing native C/C++ code.",
                 sizeText = "1.8 GB",
-                downloadUrl = "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r29/android-ndk-r29-aarch64-linux-android.tar.xz",
-                archiveType = ArchiveType.TAR_XZ,
-                targetDirName = "android-sdk/ndk/29.0.14033849",
-                verifyRelativePath = "android-sdk/ndk/29.0.14033849/source.properties",
+                downloadUrl = "https://github.com/ZeroAicy/AIDE-Ndk-Install/releases/download/v2.7.8/android-ndk-r29-beta1-aarch64.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/ndk/29.0.13113456",
+                verifyRelativePath = "android-sdk/ndk/29.0.13113456/source.properties",
                 category = ToolCategory.NATIVE
             )
         )

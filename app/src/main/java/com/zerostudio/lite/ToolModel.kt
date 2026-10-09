@@ -42,6 +42,10 @@ data class ToolItem(
             val nestedCheck = File(baseFilesDir, "android-sdk/build-tools/36.0.0/build-tools/36.0.0/zipalign")
             if (nestedCheck.exists()) return true
         }
+        if (id == "ndk_29") {
+            val oldNdk = File(baseFilesDir, "android-sdk/ndk/29.0.14033849/source.properties")
+            if (oldNdk.exists()) return true
+        }
         return false
     }
 }
