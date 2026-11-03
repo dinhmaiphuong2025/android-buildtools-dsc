@@ -105,16 +105,20 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             val cmakeDir = File(sdkDir, "cmake/3.26.0/bin")
             val ndkDir = resolveNdkDir(sdkDir)
 
-            // Dùng binary sh của Android để thông dịch script gradlew nhằm bypass kernel noexec trên /storage/emulated/0
+            // Dùng binary sh của Android với cờ -c để thông dịch script gradlew ("sh gradlew ...")
+            // nhằm bypass triệt để lỗi noexec / Permission denied trên /storage/emulated/0
             val shBinary = if (File("/system/bin/sh").exists()) "/system/bin/sh" else "sh"
-            val cmd = mutableListOf(shBinary, gradlew.absolutePath)
-            cmd.addAll(tasks.filter { it.isNotBlank() })
+            val extraArgs = mutableListOf<String>()
+            extraArgs.addAll(tasks.filter { it.isNotBlank() })
             if (aapt2Bin != null && aapt2Bin.exists()) {
-                cmd.add("-Pandroid.aapt2FromMavenOverride=${aapt2Bin.absolutePath}")
+                extraArgs.add("-Pandroid.aapt2FromMavenOverride=${aapt2Bin.absolutePath}")
             }
+            val shellCommand = "sh \"${gradlew.absolutePath}\" ${extraArgs.joinToString(" ")}".trim()
+            val cmd = listOf(shBinary, "-c", shellCommand)
 
             logBoth(">> [Daemon] Received build request: ${projectDir.absolutePath}", logBuffer)
             logBoth(">> Tasks: ${tasks.joinToString(" ")}", logBuffer)
+            logBoth(">> Executing: $shellCommand", logBuffer)
 
             val pb = ProcessBuilder(cmd)
             pb.directory(projectDir)
