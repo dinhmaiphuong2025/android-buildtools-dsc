@@ -38,6 +38,13 @@ data class ToolItem(
     fun isInstalled(baseFilesDir: File): Boolean {
         val checkFile = File(baseFilesDir, verifyRelativePath)
         if (checkFile.exists()) return true
+        if (id == "jdk17") {
+            val defaultHome = File(baseFilesDir, "usr/opt/openjdk-17")
+            val subdirs = defaultHome.listFiles { f -> f.isDirectory } ?: emptyArray()
+            for (sub in subdirs) {
+                if (File(sub, "bin/java").exists()) return true
+            }
+        }
         if (id == "build_tools_36") {
             val nestedCheck = File(baseFilesDir, "android-sdk/build-tools/36.0.0/build-tools/36.0.0/zipalign")
             if (nestedCheck.exists()) return true

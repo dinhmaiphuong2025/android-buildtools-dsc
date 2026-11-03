@@ -1,6 +1,7 @@
 package com.zerostudio.lite
 
 import android.content.Context
+import android.os.Environment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -45,58 +46,100 @@ object InstallerEngine {
             }
         }
 
+        val ext = when (tool.archiveType) {
+            ArchiveType.ZIP -> ".zip"
+            ArchiveType.TAR_GZ -> ".tar.gz"
+            ArchiveType.TAR_XZ -> ".tar.xz"
+            else -> ".bin"
+        }
+        val cacheDir = getSharedCacheDir(context)
+        val cachedArchive = if (cacheDir != null) File(cacheDir, "${tool.id}$ext") else null
+
         val tempFile = File(context.cacheDir, "pkg_${tool.id}_${System.currentTimeMillis()}")
-        try {
-            onLog(">> Connecting to download source: ${tool.downloadUrl}")
-            val url = URL(tool.downloadUrl)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 20000
-            conn.readTimeout = 30000
-            conn.connect()
+        var archiveToExtract: File? = null
 
-            if (conn.responseCode !in 200..299) {
-                onLog("!! HTTP Error: ${conn.responseCode} - ${conn.responseMessage}")
-                return@withContext false
-            }
+        if (cachedArchive != null && cachedArchive.exists() && cachedArchive.length() > 1024 * 1024) {
+            onLog(">> Tìm thấy bản cache cục bộ: ${cachedArchive.name} (${cachedArchive.length() / (1024 * 1024)} MB)")
+            onLog(">> Bỏ qua tải từ mạng, tiến hành giải nén...")
+            archiveToExtract = cachedArchive
+        } else {
+            try {
+                onLog(">> Connecting to download source: ${tool.downloadUrl}")
+                val url = URL(tool.downloadUrl)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 20000
+                conn.readTimeout = 30000
+                conn.connect()
 
-            val totalLength = conn.contentLength.toLong()
-            var downloaded = 0L
+                if (conn.responseCode !in 200..299) {
+                    onLog("!! HTTP Error: ${conn.responseCode} - ${conn.responseMessage}")
+                    return@withContext false
+                }
 
-            conn.inputStream.use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    val buffer = ByteArray(32 * 1024)
-                    var read: Int
-                    var lastPercent = 0
-                    while (input.read(buffer).also { read = it } != -1) {
-                        output.write(buffer, 0, read)
-                        downloaded += read
-                        if (totalLength > 0) {
-                            val percent = ((downloaded * 100) / totalLength).toInt()
-                            if (percent != lastPercent) {
-                                lastPercent = percent
-                                onProgress(percent)
+                val totalLength = conn.contentLength.toLong()
+                var downloaded = 0L
+
+                conn.inputStream.use { input ->
+                    FileOutputStream(tempFile).use { output ->
+                        val buffer = ByteArray(32 * 1024)
+                        var read: Int
+                        var lastPercent = 0
+                        while (input.read(buffer).also { read = it } != -1) {
+                            output.write(buffer, 0, read)
+                            downloaded += read
+                            if (totalLength > 0) {
+                                val percent = ((downloaded * 100) / totalLength).toInt()
+                                if (percent != lastPercent) {
+                                    lastPercent = percent
+                                    onProgress(percent)
+                                }
                             }
                         }
                     }
                 }
-            }
-            onLog(">> Download complete (${downloaded / (1024 * 1024)} MB). Extracting archive...")
+                onLog(">> Download complete (${downloaded / (1024 * 1024)} MB).")
 
-            // Extract archive
+                if (cachedArchive != null) {
+                    try {
+                        tempFile.copyTo(cachedArchive, overwrite = true)
+                        onLog(">> Đã lưu bản sao cache vào: ${cachedArchive.absolutePath}")
+                    } catch (e: Exception) {
+                        onLog("!! Không thể lưu cache SDCard: ${e.message}")
+                    }
+                }
+
+                archiveToExtract = if (cachedArchive != null && cachedArchive.exists() && cachedArchive.length() == tempFile.length()) {
+                    tempFile.delete()
+                    cachedArchive
+                } else {
+                    tempFile
+                }
+
+            } catch (e: Exception) {
+                onLog("!! Installation error: ${e.message}")
+                tempFile.delete()
+                return@withContext false
+            }
+        }
+
+        try {
+            onLog(">> Extracting archive...")
             val extractSuccess = when (tool.archiveType) {
                 ArchiveType.ZIP -> {
                     val strip = if (tool.id == "ndk_29") 1 else 0
-                    extractZip(tempFile, targetDir, strip, onLog)
+                    extractZip(archiveToExtract!!, targetDir, strip, onLog)
                 }
-                ArchiveType.TAR_GZ -> extractTarGz(tempFile, targetDir, stripPaths = 1, onLog)
+                ArchiveType.TAR_GZ -> extractTarGz(archiveToExtract!!, targetDir, stripPaths = 1, onLog)
                 ArchiveType.TAR_XZ -> {
                     val strip = if (tool.id == "build_tools_36") 2 else 0
-                    extractTarXz(tempFile, targetDir, stripPaths = strip, onLog)
+                    extractTarXz(archiveToExtract!!, targetDir, stripPaths = strip, onLog)
                 }
                 else -> true
             }
 
-            tempFile.delete()
+            if (archiveToExtract != cachedArchive) {
+                archiveToExtract?.delete()
+            }
 
             if (extractSuccess) {
                 makeExecutables(targetDir)
@@ -108,10 +151,26 @@ object InstallerEngine {
             }
 
         } catch (e: Exception) {
-            onLog("!! Installation error: ${e.message}")
-            tempFile.delete()
+            onLog("!! Extraction error: ${e.message}")
+            if (archiveToExtract != cachedArchive) {
+                archiveToExtract?.delete()
+            }
             return@withContext false
         }
+    }
+
+    private fun getSharedCacheDir(context: Context): File? {
+        val candidates = listOf(
+            File("/storage/emulated/0/Download/ZeroStudio/archives"),
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "ZeroStudio/archives"),
+            context.getExternalFilesDir("archives")
+        )
+        for (dir in candidates) {
+            if (dir != null && (dir.exists() || dir.mkdirs())) {
+                return dir
+            }
+        }
+        return null
     }
 
     private fun extractZip(zipFile: File, targetDir: File, stripPaths: Int, onLog: (String) -> Unit): Boolean {
@@ -129,8 +188,11 @@ object InstallerEngine {
                             FileOutputStream(newFile).use { fos ->
                                 zis.copyTo(fos)
                             }
-                            if (newFile.name.endsWith(".sh") || newFile.name in listOf("clang", "clang++", "make", "ndk-build", "ndk-which", "ndk-gdb")) {
+                            if (newFile.name.endsWith(".sh") || newFile.parentFile?.name == "bin" || newFile.name in listOf("clang", "clang++", "make", "ndk-build", "ndk-which", "ndk-gdb")) {
                                 newFile.setExecutable(true, false)
+                                try {
+                                    Runtime.getRuntime().exec(arrayOf("chmod", "+x", newFile.absolutePath))
+                                } catch (_: Exception) {}
                             }
                         }
                     }
@@ -190,6 +252,12 @@ object InstallerEngine {
                 val destFile = File(targetDir, relativeName)
                 if (entry.isDirectory) {
                     destFile.mkdirs()
+                } else if (entry.isSymbolicLink) {
+                    destFile.parentFile?.mkdirs()
+                    try {
+                        destFile.delete()
+                        android.system.Os.symlink(entry.linkName, destFile.absolutePath)
+                    } catch (_: Exception) {}
                 } else {
                     destFile.parentFile?.mkdirs()
                     FileOutputStream(destFile).use { fos ->
@@ -198,8 +266,14 @@ object InstallerEngine {
                             fos.write(buffer, 0, len)
                         }
                     }
-                    if ((entry.mode and 0b001_000_000) != 0 || entry.name.endsWith(".sh")) {
+                    if ((entry.mode and 0b001_000_000) != 0 ||
+                        entry.name.endsWith(".sh") ||
+                        destFile.parentFile?.name == "bin" ||
+                        destFile.name in listOf("java", "javac", "aapt2", "aapt", "zipalign", "aidl", "d8", "clang", "cmake")) {
                         destFile.setExecutable(true, false)
+                        try {
+                            Runtime.getRuntime().exec(arrayOf("chmod", "+x", destFile.absolutePath))
+                        } catch (_: Exception) {}
                     }
                 }
             }
@@ -215,12 +289,28 @@ object InstallerEngine {
     }
 
     private fun makeExecutables(dir: File) {
+        try {
+            val binDir = File(dir, "bin")
+            if (binDir.exists() && binDir.isDirectory) {
+                Runtime.getRuntime().exec(arrayOf("chmod", "-R", "755", binDir.absolutePath)).waitFor()
+            }
+            dir.listFiles { f -> f.isDirectory }?.forEach { sub ->
+                val nestedBin = File(sub, "bin")
+                if (nestedBin.exists() && nestedBin.isDirectory) {
+                    Runtime.getRuntime().exec(arrayOf("chmod", "-R", "755", nestedBin.absolutePath)).waitFor()
+                }
+            }
+        } catch (_: Exception) {}
+
         val files = dir.listFiles() ?: return
         for (f in files) {
             if (f.isDirectory) {
                 makeExecutables(f)
-            } else if (f.name.endsWith(".sh") || f.name in listOf("aapt2", "aapt", "zipalign", "aidl", "d8", "java", "javac", "clang", "cmake")) {
+            } else if (f.name.endsWith(".sh") || f.parentFile?.name == "bin" || f.name in listOf("aapt2", "aapt", "zipalign", "aidl", "d8", "java", "javac", "clang", "cmake")) {
                 f.setExecutable(true, false)
+                try {
+                    Runtime.getRuntime().exec(arrayOf("chmod", "+x", f.absolutePath))
+                } catch (_: Exception) {}
             }
         }
     }
