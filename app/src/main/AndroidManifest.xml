@@ -15,6 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ZeroLite"
         android:largeHeap="true"
+        android:allowNativeHeapPointerTagging="false"
         android:requestLegacyExternalStorage="true">
 
         <activity
