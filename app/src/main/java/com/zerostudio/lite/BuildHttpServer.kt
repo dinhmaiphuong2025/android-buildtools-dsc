@@ -32,11 +32,14 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             if (aapt2Bin != null) ensureExecutable(aapt2Bin)
             val ndkDir = resolveNdkDir(sdkDir)
 
-            json.put("java_ready", javaBin.exists() && javaBin.canExecute())
+            val isBionic = isBionicElf(javaBin)
+            json.put("java_ready", javaBin.exists() && javaBin.canExecute() && isBionic)
+            json.put("java_bionic", isBionic)
             json.put("java_home", javaHome.absolutePath)
             json.put("aapt2_ready", aapt2Bin != null && aapt2Bin.exists() && aapt2Bin.canExecute())
             json.put("sdk_ready", sdkDir.exists())
             json.put("ndk_ready", ndkDir != null && ndkDir.exists())
+            json.put("root_ready", checkSuAvailable())
 
             return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString())
         }
@@ -105,19 +108,41 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             val cmakeDir = File(sdkDir, "cmake/3.26.0/bin")
             val ndkDir = resolveNdkDir(sdkDir)
 
-            // Dùng binary sh của Android với cờ -c để thông dịch script gradlew ("sh gradlew ...")
-            // nhằm bypass triệt để lỗi noexec / Permission denied trên /storage/emulated/0
+            val hasSu = checkSuAvailable()
             val shBinary = if (File("/system/bin/sh").exists()) "/system/bin/sh" else "sh"
+            val runner = if (hasSu) "su" else shBinary
+
             val extraArgs = mutableListOf<String>()
             extraArgs.addAll(tasks.filter { it.isNotBlank() })
             if (aapt2Bin != null && aapt2Bin.exists()) {
                 extraArgs.add("-Pandroid.aapt2FromMavenOverride=${aapt2Bin.absolutePath}")
             }
-            val shellCommand = "sh \"${gradlew.absolutePath}\" ${extraArgs.joinToString(" ")}".trim()
-            val cmd = listOf(shBinary, "-c", shellCommand)
+
+            val envExports = buildString {
+                if (hasSu) append("export PATH=\$PATH:/data/adb/ksu/bin; ")
+                if (javaHome.exists()) {
+                    append("export JAVA_HOME=\"${javaHome.absolutePath}\"; ")
+                    append("export PATH=\"${javaHome.absolutePath}/bin:\$PATH\"; ")
+                }
+                if (sdkDir.exists()) {
+                    append("export ANDROID_HOME=\"${sdkDir.absolutePath}\"; ")
+                    append("export ANDROID_SDK_ROOT=\"${sdkDir.absolutePath}\"; ")
+                }
+                if (ndkDir != null && ndkDir.exists()) {
+                    append("export ANDROID_NDK_ROOT=\"${ndkDir.absolutePath}\"; ")
+                    append("export ANDROID_NDK_HOME=\"${ndkDir.absolutePath}\"; ")
+                }
+                if (cmakeDir.exists()) {
+                    append("export PATH=\"${cmakeDir.absolutePath}:\$PATH\"; ")
+                }
+            }
+
+            val shellCommand = "${envExports}sh \"${gradlew.absolutePath}\" ${extraArgs.joinToString(" ")}".trim()
+            val cmd = listOf(runner, "-c", shellCommand)
 
             logBoth(">> [Daemon] Received build request: ${projectDir.absolutePath}", logBuffer)
             logBoth(">> Tasks: ${tasks.joinToString(" ")}", logBuffer)
+            logBoth(">> Runner: $runner (root=$hasSu)", logBuffer)
             logBoth(">> Executing: $shellCommand", logBuffer)
 
             val pb = ProcessBuilder(cmd)
@@ -132,7 +157,11 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             if (javaHome.exists() && javaBin.exists()) {
                 env["JAVA_HOME"] = javaHome.absolutePath
                 pathEnv = "${javaHome.absolutePath}/bin:$pathEnv"
-                logBoth(">> [Daemon] JAVA_HOME set to: ${javaHome.absolutePath} (canExecute=${javaBin.canExecute()})", logBuffer)
+                val bionic = isBionicElf(javaBin)
+                logBoth(">> [Daemon] JAVA_HOME set to: ${javaHome.absolutePath} (canExecute=${javaBin.canExecute()}, bionic=$bionic)", logBuffer)
+                if (!bionic) {
+                    logBoth("!! [Daemon] CẢNH BÁO: bin/java liên kết với glibc (Linux), không phải Android Bionic linker64! Vui lòng vào Tool Packages để cài lại OpenJDK 17.", logBuffer)
+                }
             } else {
                 logBoth("!! [Daemon] WARNING: bin/java not found in ${javaHome.absolutePath}", logBuffer)
             }
@@ -182,6 +211,19 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
     }
 
     companion object {
+        fun checkSuAvailable(): Boolean {
+            val suCandidates = listOf("/data/adb/ksu/bin/su", "/system/bin/su", "/system/xbin/su", "su")
+            return try {
+                val p = ProcessBuilder("su", "-c", "id").start()
+                val reader = p.inputStream.bufferedReader()
+                val line = reader.readLine() ?: ""
+                p.waitFor()
+                line.contains("uid=0") || line.contains("root")
+            } catch (_: Exception) {
+                false
+            }
+        }
+
         fun resolveJavaHome(filesDir: File): File {
             val defaultHome = File(filesDir, "usr/opt/openjdk-17")
             if (File(defaultHome, "bin/java").exists()) return defaultHome

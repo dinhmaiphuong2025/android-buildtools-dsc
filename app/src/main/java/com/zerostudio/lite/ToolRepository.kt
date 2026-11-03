@@ -37,10 +37,10 @@ object ToolRepository {
             ToolItem(
                 id = "jdk17",
                 title = "OpenJDK 17 (arm64)",
-                description = "Adoptium Temurin JVM runtime required to execute Gradle Wrapper tasks.",
-                sizeText = "320 MB",
-                downloadUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.14%2B7/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.14_7.tar.gz",
-                archiveType = ArchiveType.TAR_GZ,
+                description = "Android-native (Bionic) OpenJDK 17 JVM runtime for Gradle Wrapper tasks.",
+                sizeText = "150 MB",
+                downloadUrl = "https://github.com/itsaky/openjdk-17-android/releases/download/01-01-2022/jdk17-arm64.tar.xz",
+                archiveType = ArchiveType.TAR_XZ,
                 targetDirName = "usr/opt/openjdk-17",
                 verifyRelativePath = "usr/opt/openjdk-17/bin/java",
                 category = ToolCategory.COMPILER
