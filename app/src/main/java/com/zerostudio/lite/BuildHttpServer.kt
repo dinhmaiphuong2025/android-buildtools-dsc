@@ -41,11 +41,28 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             json.put("ndk_ready", ndkDir != null && ndkDir.exists())
             json.put("runner_mode", "userspace")
 
+            val sessionState = ToolRepository.buildSession.value
+            json.put("is_building", sessionState.isBuilding)
+            json.put("current_project", sessionState.projectPath)
+            json.put("current_tasks", sessionState.tasks)
+            json.put("last_duration_ms", sessionState.lastDurationMs)
+            json.put("last_exit_code", sessionState.lastExitCode ?: -1)
+            json.put("total_builds", sessionState.totalBuilds)
+
             return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString())
         }
 
         if (method == Method.GET && uri == "/build/log") {
             return newFixedLengthResponse(Response.Status.OK, "text/plain; charset=utf-8", lastLogs)
+        }
+
+        if (method == Method.POST && uri == "/build/cancel") {
+            val cancelled = ToolRepository.cancelActiveBuild()
+            val res = JSONObject().apply {
+                put("success", cancelled)
+                put("message", if (cancelled) "Active build process was cancelled." else "No active build process running.")
+            }
+            return newFixedLengthResponse(Response.Status.OK, "application/json", res.toString())
         }
 
         if (method == Method.POST && uri == "/build") {
@@ -86,6 +103,16 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
     private fun executeBuild(projectDir: File, tasks: List<String>): JSONObject {
         val logBuffer = StringBuilder()
         var exitCode = -1
+        val startTime = System.currentTimeMillis()
+
+        ToolRepository.updateBuildSession {
+            it.copy(
+                isBuilding = true,
+                projectPath = projectDir.name,
+                tasks = tasks.joinToString(" "),
+                startTime = startTime
+            )
+        }
 
         try {
             val gradlew = projectDir.resolve("gradlew")
@@ -180,6 +207,7 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
 
             pb.redirectErrorStream(true)
             val process = pb.start()
+            ToolRepository.activeProcess = process
 
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             var line: String?
@@ -198,6 +226,17 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
                 put("success", false)
                 put("error", e.message)
                 put("exitCode", -1)
+            }
+        } finally {
+            val duration = System.currentTimeMillis() - startTime
+            ToolRepository.activeProcess = null
+            ToolRepository.updateBuildSession {
+                it.copy(
+                    isBuilding = false,
+                    lastDurationMs = duration,
+                    lastExitCode = exitCode,
+                    totalBuilds = it.totalBuilds + 1
+                )
             }
         }
 

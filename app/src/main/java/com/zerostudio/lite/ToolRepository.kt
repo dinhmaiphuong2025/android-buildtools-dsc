@@ -1,7 +1,20 @@
 package com.zerostudio.lite
 
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.util.Collections
+
+data class BuildSession(
+    val isBuilding: Boolean = false,
+    val projectPath: String = "",
+    val tasks: String = "",
+    val startTime: Long = 0L,
+    val lastDurationMs: Long = 0L,
+    val lastExitCode: Int? = null,
+    val totalBuilds: Int = 0
+)
 
 object ToolRepository {
 
@@ -9,12 +22,48 @@ object ToolRepository {
     private val _logFlow = MutableSharedFlow<String>(replay = 50)
     val logFlow = _logFlow.asSharedFlow()
 
+    private val _buildSession = MutableStateFlow(BuildSession())
+    val buildSession = _buildSession.asStateFlow()
+
+    @Volatile
+    var activeProcess: Process? = null
+
+    val logHistory: MutableList<String> = Collections.synchronizedList(mutableListOf<String>())
+    private const val MAX_LOG_HISTORY = 3000
+
     init {
         initTools()
     }
 
+    fun updateBuildSession(updater: (BuildSession) -> BuildSession) {
+        _buildSession.value = updater(_buildSession.value)
+    }
+
+    fun cancelActiveBuild(): Boolean {
+        return try {
+            val p = activeProcess
+            if (p != null) {
+                p.destroyForcibly()
+                activeProcess = null
+                true
+            } else {
+                false
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     suspend fun emitLog(msg: String) {
+        if (logHistory.size >= MAX_LOG_HISTORY) {
+            logHistory.removeAt(0)
+        }
+        logHistory.add(msg)
         _logFlow.emit(msg)
+    }
+
+    fun clearLogs() {
+        logHistory.clear()
     }
 
     private fun initTools() {
