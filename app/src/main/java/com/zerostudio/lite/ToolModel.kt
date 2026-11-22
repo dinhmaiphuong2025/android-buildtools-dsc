@@ -19,7 +19,8 @@ enum class ArchiveType {
 enum class ToolCategory(val title: String) {
     COMPILER("Compiler (Core)"),
     PLATFORMS("SDK Platforms"),
-    NATIVE("Native C/C++")
+    NATIVE("Native C/C++"),
+    UTILITIES("Utilities")
 }
 
 fun isBionicElf(file: File): Boolean {

@@ -1,7 +1,11 @@
 package com.zerostudio.lite
 
+import android.app.ActivityManager
+import android.content.Context
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.os.StatFs
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,6 +26,7 @@ class DashboardFragment : Fragment() {
     private lateinit var tvDaemonStatus: TextView
     private lateinit var tvDaemonEndpoint: TextView
     private lateinit var btnClearLog: MaterialButton
+    private lateinit var tvDeviceInfo: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,12 +45,14 @@ class DashboardFragment : Fragment() {
         tvDaemonStatus = view.findViewById(R.id.tvDaemonStatus)
         tvDaemonEndpoint = view.findViewById(R.id.tvDaemonEndpoint)
         btnClearLog = view.findViewById(R.id.btnClearLog)
+        tvDeviceInfo = view.findViewById(R.id.tvDeviceInfo)
 
         btnClearLog.setOnClickListener {
             tvLogs.text = ""
         }
 
         updateDaemonStatus(true)
+        updateSystemInfo()
 
         viewLifecycleOwner.lifecycleScope.launch {
             ToolRepository.logFlow.collectLatest { msg ->
@@ -58,13 +65,50 @@ class DashboardFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         updateDaemonStatus(true)
+        updateSystemInfo()
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
             updateDaemonStatus(true)
+            updateSystemInfo()
         }
+    }
+
+    private fun updateSystemInfo() {
+        val ctx = context ?: return
+        val sb = StringBuilder()
+
+        // Device info
+        sb.appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
+        sb.appendLine("Android: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+        sb.appendLine("CPU: ${Build.SUPPORTED_ABIS.joinToString(", ")}")
+
+        // RAM info
+        val actManager = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val memInfo = ActivityManager.MemoryInfo()
+        actManager.getMemoryInfo(memInfo)
+        val totalRam = memInfo.totalMem / (1024 * 1024)
+        val availRam = memInfo.availMem / (1024 * 1024)
+        sb.appendLine("RAM: ${availRam} MB free / ${totalRam} MB total")
+
+        // Internal storage
+        try {
+            val stat = StatFs(ctx.filesDir.absolutePath)
+            val availBytes = stat.availableBlocksLong * stat.blockSizeLong
+            val totalBytes = stat.totalBlocksLong * stat.blockSizeLong
+            val availGB = String.format("%.1f", availBytes / (1024.0 * 1024.0 * 1024.0))
+            val totalGB = String.format("%.1f", totalBytes / (1024.0 * 1024.0 * 1024.0))
+            sb.appendLine("Storage: ${availGB} GB free / ${totalGB} GB total")
+        } catch (_: Exception) {}
+
+        // Tools installed count
+        val installedCount = ToolRepository.tools.count { it.isInstalled(ctx.filesDir) }
+        val totalCount = ToolRepository.tools.size
+        sb.append("Tools: $installedCount / $totalCount installed")
+
+        tvDeviceInfo.text = sb.toString()
     }
 
     fun updateDaemonStatus(active: Boolean) {

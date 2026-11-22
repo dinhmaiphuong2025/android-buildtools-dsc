@@ -115,5 +115,61 @@ object ToolRepository {
                 category = ToolCategory.NATIVE
             )
         )
+
+        // SDK Platforms (additional)
+        tools.add(
+            ToolItem(
+                id = "platform_36",
+                title = "Android SDK Platform 36",
+                description = "Provides android.jar API 36 for projects targeting Android 16.",
+                sizeText = "155 MB",
+                downloadUrl = "https://dl.google.com/android/repository/platform-36_r01.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/platforms",
+                verifyRelativePath = "android-sdk/platforms/android-36/android.jar",
+                category = ToolCategory.PLATFORMS
+            )
+        )
+        tools.add(
+            ToolItem(
+                id = "platform_33",
+                title = "Android SDK Platform 33",
+                description = "Provides android.jar API 33 for projects targeting Android 13.",
+                sizeText = "130 MB",
+                downloadUrl = "https://dl.google.com/android/repository/platform-33-ext5_r05.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/platforms",
+                verifyRelativePath = "android-sdk/platforms/android-33/android.jar",
+                category = ToolCategory.PLATFORMS
+            )
+        )
+
+        // Utilities
+        tools.add(
+            ToolItem(
+                id = "gradle_8_11",
+                title = "Gradle 8.11.1 (Offline)",
+                description = "Offline Gradle distribution for projects without network. Extracted to gradle wrapper cache.",
+                sizeText = "165 MB",
+                downloadUrl = "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "gradle-dist/gradle-8.11.1",
+                verifyRelativePath = "gradle-dist/gradle-8.11.1/bin/gradle",
+                category = ToolCategory.UTILITIES
+            )
+        )
+        tools.add(
+            ToolItem(
+                id = "cmdline_tools",
+                title = "SDK Command-Line Tools",
+                description = "Android SDK command-line tools: sdkmanager, avdmanager, lint, retrace.",
+                sizeText = "155 MB",
+                downloadUrl = "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/cmdline-tools/latest",
+                verifyRelativePath = "android-sdk/cmdline-tools/latest/bin/sdkmanager",
+                category = ToolCategory.UTILITIES
+            )
+        )
     }
 }

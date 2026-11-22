@@ -39,7 +39,7 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             json.put("aapt2_ready", aapt2Bin != null && aapt2Bin.exists() && aapt2Bin.canExecute())
             json.put("sdk_ready", sdkDir.exists())
             json.put("ndk_ready", ndkDir != null && ndkDir.exists())
-            json.put("root_ready", checkSuAvailable())
+            json.put("runner_mode", "userspace")
 
             return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString())
         }
@@ -108,9 +108,8 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             val cmakeDir = File(sdkDir, "cmake/3.26.0/bin")
             val ndkDir = resolveNdkDir(sdkDir)
 
-            val hasSu = checkSuAvailable()
             val shBinary = if (File("/system/bin/sh").exists()) "/system/bin/sh" else "sh"
-            val runner = if (hasSu) "su" else shBinary
+            val runner = shBinary
 
             val extraArgs = mutableListOf<String>()
             extraArgs.addAll(tasks.filter { it.isNotBlank() })
@@ -119,7 +118,6 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
             }
 
             val envExports = buildString {
-                if (hasSu) append("export PATH=\$PATH:/data/adb/ksu/bin; ")
                 if (javaHome.exists()) {
                     append("export JAVA_HOME=\"${javaHome.absolutePath}\"; ")
                     append("export PATH=\"${javaHome.absolutePath}/bin:\$PATH\"; ")
@@ -142,7 +140,7 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
 
             logBoth(">> [Daemon] Received build request: ${projectDir.absolutePath}", logBuffer)
             logBoth(">> Tasks: ${tasks.joinToString(" ")}", logBuffer)
-            logBoth(">> Runner: $runner (root=$hasSu)", logBuffer)
+            logBoth(">> Runner: $runner (userspace)", logBuffer)
             logBoth(">> Executing: $shellCommand", logBuffer)
 
             val pb = ProcessBuilder(cmd)
@@ -211,19 +209,6 @@ class BuildHttpServer(port: Int, private val context: Context) : NanoHTTPD(port)
     }
 
     companion object {
-        fun checkSuAvailable(): Boolean {
-            val suCandidates = listOf("/data/adb/ksu/bin/su", "/system/bin/su", "/system/xbin/su", "su")
-            return try {
-                val p = ProcessBuilder("su", "-c", "id").start()
-                val reader = p.inputStream.bufferedReader()
-                val line = reader.readLine() ?: ""
-                p.waitFor()
-                line.contains("uid=0") || line.contains("root")
-            } catch (_: Exception) {
-                false
-            }
-        }
-
         fun resolveJavaHome(filesDir: File): File {
             val defaultHome = File(filesDir, "usr/opt/openjdk-17")
             if (File(defaultHome, "bin/java").exists()) return defaultHome

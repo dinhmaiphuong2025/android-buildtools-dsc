@@ -19,13 +19,17 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var btnNavHome: LinearLayout
     private lateinit var btnNavTools: LinearLayout
+    private lateinit var btnNavSettings: LinearLayout
     private lateinit var ivNavHome: ImageView
     private lateinit var ivNavTools: ImageView
+    private lateinit var ivNavSettings: ImageView
     private lateinit var tvNavHome: TextView
     private lateinit var tvNavTools: TextView
+    private lateinit var tvNavSettings: TextView
 
     private val TAG_DASHBOARD = "tag_dashboard"
     private val TAG_TOOLS = "tag_tools"
+    private val TAG_SETTINGS = "tag_settings"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,10 +37,13 @@ class MainActivity : AppCompatActivity() {
 
         btnNavHome = findViewById(R.id.btnNavHome)
         btnNavTools = findViewById(R.id.btnNavTools)
+        btnNavSettings = findViewById(R.id.btnNavSettings)
         ivNavHome = findViewById(R.id.ivNavHome)
         ivNavTools = findViewById(R.id.ivNavTools)
+        ivNavSettings = findViewById(R.id.ivNavSettings)
         tvNavHome = findViewById(R.id.tvNavHome)
         tvNavTools = findViewById(R.id.tvNavTools)
+        tvNavSettings = findViewById(R.id.tvNavSettings)
 
         startDaemonService()
         autoExtractBundledAapt2()
@@ -44,35 +51,44 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             val dashboard = DashboardFragment()
             val tools = ToolsFragment()
+            val settings = SettingsFragment()
             supportFragmentManager.beginTransaction()
                 .add(R.id.fragmentContainer, dashboard, TAG_DASHBOARD)
                 .add(R.id.fragmentContainer, tools, TAG_TOOLS)
+                .add(R.id.fragmentContainer, settings, TAG_SETTINGS)
                 .hide(tools)
+                .hide(settings)
                 .commit()
-            updateNavState(isHome = true)
+            updateNavState("home")
         }
 
         btnNavHome.setOnClickListener {
-            val fm = supportFragmentManager
-            val dashboard = fm.findFragmentByTag(TAG_DASHBOARD)
-            val tools = fm.findFragmentByTag(TAG_TOOLS)
-            val tx = fm.beginTransaction()
-            if (tools != null) tx.hide(tools)
-            if (dashboard != null) tx.show(dashboard)
-            tx.commit()
-            updateNavState(isHome = true)
+            showFragment(TAG_DASHBOARD)
+            updateNavState("home")
         }
 
         btnNavTools.setOnClickListener {
-            val fm = supportFragmentManager
-            val dashboard = fm.findFragmentByTag(TAG_DASHBOARD)
-            val tools = fm.findFragmentByTag(TAG_TOOLS)
-            val tx = fm.beginTransaction()
-            if (dashboard != null) tx.hide(dashboard)
-            if (tools != null) tx.show(tools)
-            tx.commit()
-            updateNavState(isHome = false)
+            showFragment(TAG_TOOLS)
+            updateNavState("tools")
         }
+
+        btnNavSettings.setOnClickListener {
+            showFragment(TAG_SETTINGS)
+            updateNavState("settings")
+        }
+    }
+
+    private fun showFragment(activeTag: String) {
+        val fm = supportFragmentManager
+        val tx = fm.beginTransaction()
+        val tags = listOf(TAG_DASHBOARD, TAG_TOOLS, TAG_SETTINGS)
+        for (tag in tags) {
+            val frag = fm.findFragmentByTag(tag)
+            if (frag != null) {
+                if (tag == activeTag) tx.show(frag) else tx.hide(frag)
+            }
+        }
+        tx.commit()
     }
 
     private fun getThemeColor(attr: Int): Int {
@@ -81,32 +97,47 @@ class MainActivity : AppCompatActivity() {
         return typedValue.data
     }
 
-    private fun updateNavState(isHome: Boolean) {
+    private fun updateNavState(active: String) {
         val primaryColor = getThemeColor(com.google.android.material.R.attr.colorPrimary)
         val mutedColor = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant)
 
-        if (isHome) {
-            btnNavHome.setBackgroundResource(R.drawable.nav_item_active_bg)
-            btnNavTools.background = null
+        // Reset all tabs
+        btnNavHome.background = null
+        btnNavTools.background = null
+        btnNavSettings.background = null
 
-            ivNavHome.setColorFilter(primaryColor)
-            tvNavHome.setTextColor(primaryColor)
-            tvNavHome.setTypeface(null, android.graphics.Typeface.BOLD)
+        ivNavHome.setColorFilter(mutedColor)
+        tvNavHome.setTextColor(mutedColor)
+        tvNavHome.setTypeface(null, android.graphics.Typeface.NORMAL)
 
-            ivNavTools.setColorFilter(mutedColor)
-            tvNavTools.setTextColor(mutedColor)
-            tvNavTools.setTypeface(null, android.graphics.Typeface.NORMAL)
-        } else {
-            btnNavTools.setBackgroundResource(R.drawable.nav_item_active_bg)
-            btnNavHome.background = null
+        ivNavTools.setColorFilter(mutedColor)
+        tvNavTools.setTextColor(mutedColor)
+        tvNavTools.setTypeface(null, android.graphics.Typeface.NORMAL)
 
-            ivNavTools.setColorFilter(primaryColor)
-            tvNavTools.setTextColor(primaryColor)
-            tvNavTools.setTypeface(null, android.graphics.Typeface.BOLD)
+        ivNavSettings.setColorFilter(mutedColor)
+        tvNavSettings.setTextColor(mutedColor)
+        tvNavSettings.setTypeface(null, android.graphics.Typeface.NORMAL)
 
-            ivNavHome.setColorFilter(mutedColor)
-            tvNavHome.setTextColor(mutedColor)
-            tvNavHome.setTypeface(null, android.graphics.Typeface.NORMAL)
+        // Highlight active tab
+        when (active) {
+            "home" -> {
+                btnNavHome.setBackgroundResource(R.drawable.nav_item_active_bg)
+                ivNavHome.setColorFilter(primaryColor)
+                tvNavHome.setTextColor(primaryColor)
+                tvNavHome.setTypeface(null, android.graphics.Typeface.BOLD)
+            }
+            "tools" -> {
+                btnNavTools.setBackgroundResource(R.drawable.nav_item_active_bg)
+                ivNavTools.setColorFilter(primaryColor)
+                tvNavTools.setTextColor(primaryColor)
+                tvNavTools.setTypeface(null, android.graphics.Typeface.BOLD)
+            }
+            "settings" -> {
+                btnNavSettings.setBackgroundResource(R.drawable.nav_item_active_bg)
+                ivNavSettings.setColorFilter(primaryColor)
+                tvNavSettings.setTextColor(primaryColor)
+                tvNavSettings.setTypeface(null, android.graphics.Typeface.BOLD)
+            }
         }
     }
 
