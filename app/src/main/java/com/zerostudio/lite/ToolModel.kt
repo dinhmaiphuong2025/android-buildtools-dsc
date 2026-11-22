@@ -128,14 +128,34 @@ data class ToolItem(
             val platformsDir = File(baseFilesDir, "android-sdk/platforms")
             if (platformsDir.exists()) {
                 val apiNum = id.removePrefix("platform_")
-                val found = platformsDir.listFiles()?.any { sub ->
-                    sub.isDirectory &&
-                    (sub.name == "android-$apiNum" || sub.name.startsWith("android-$apiNum.")) &&
-                    File(sub, "android.jar").exists()
-                } ?: false
+                val found = platformsDir.walkTopDown().maxDepth(3).any { jar ->
+                    if (jar.name == "android.jar" && jar.isFile) {
+                        val parentDir = jar.parentFile ?: return@any false
+                        if (parentDir.name == "android-$apiNum" || parentDir.name.startsWith("android-$apiNum.") || parentDir.name.contains(apiNum)) {
+                            true
+                        } else {
+                            try {
+                                val props = File(parentDir, "source.properties")
+                                props.exists() && props.readLines().any { line ->
+                                    line.replace(" ", "").startsWith("AndroidVersion.ApiLevel=$apiNum")
+                                }
+                            } catch (_: Exception) {
+                                false
+                            }
+                        }
+                    } else false
+                }
                 if (found) return true
             }
             return false
+        }
+
+        // Generic fallback for any tool: search for verification file inside its target directory
+        val targetDir = File(baseFilesDir, targetDirName)
+        if (targetDir.exists()) {
+            val verifyName = checkFile.name
+            val found = targetDir.walkTopDown().maxDepth(5).any { it.name == verifyName && it.isFile }
+            if (found) return true
         }
 
         return false

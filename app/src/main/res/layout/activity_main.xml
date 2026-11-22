@@ -46,11 +46,12 @@
         <LinearLayout
             android:id="@+id/btnNavHome"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginEnd="4dp"
             android:gravity="center"
-            android:orientation="horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
             android:clickable="true"
             android:focusable="true">
 
@@ -65,9 +66,9 @@
                 android:id="@+id/tvNavHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginTop="2dp"
                 android:text="Dashboard"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
                 android:singleLine="true"
                 android:textColor="?attr/colorPrimary" />
@@ -77,18 +78,20 @@
         <LinearLayout
             android:id="@+id/btnNavTools"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:gravity="center"
-            android:orientation="horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
                 android:id="@+id/ivNavTools"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:src="@drawable/ic_build"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -96,9 +99,9 @@
                 android:id="@+id/tvNavTools"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginTop="2dp"
                 android:text="Tools"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:singleLine="true"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
@@ -107,18 +110,20 @@
         <LinearLayout
             android:id="@+id/btnNavSettings"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:gravity="center"
-            android:orientation="horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
             android:clickable="true"
             android:focusable="true">
 
             <ImageView
                 android:id="@+id/ivNavSettings"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:src="@drawable/ic_settings"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -126,9 +131,9 @@
                 android:id="@+id/tvNavSettings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginTop="2dp"
                 android:text="Settings"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:singleLine="true"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>

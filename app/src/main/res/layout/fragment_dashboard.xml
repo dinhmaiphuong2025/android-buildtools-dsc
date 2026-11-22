@@ -74,12 +74,11 @@
                         android:text="127.0.0.1:8088"
                         android:textSize="11sp"
                         android:textColor="#2E7D32"
-                        android:fontFamily="monospace"
                         android:singleLine="true" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- System Metrics Grid (Clean 2-row layout, no messy wrapping) -->
+            <!-- System Metrics Grid -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -91,8 +90,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="📱 Android"
-                    android:textSize="11sp"
+                    android:text="Device: --"
+                    android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:singleLine="true"
                     android:ellipsize="end" />
@@ -102,8 +101,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="⚡ RAM: --"
-                    android:textSize="11sp"
+                    android:text="RAM: --"
+                    android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:singleLine="true" />
             </LinearLayout>
@@ -111,7 +110,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -119,8 +118,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="💾 Disk: --"
-                    android:textSize="11sp"
+                    android:text="Storage: --"
+                    android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:singleLine="true"
                     android:ellipsize="end" />
@@ -130,8 +129,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="🧰 Tools: --"
-                    android:textSize="11sp"
+                    android:text="Tools: --"
+                    android:textSize="12sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:singleLine="true" />
             </LinearLayout>
@@ -190,7 +189,6 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:fontFamily="monospace"
                     android:textSize="12sp"
                     android:textColor="#E65100"
                     android:textStyle="bold"
@@ -201,16 +199,19 @@
                     android:id="@+id/btnCancelBuild"
                     style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:minHeight="0dp"
-                    android:minWidth="0dp"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minHeight="36dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="0dp"
+                    android:textSize="12sp"
+                    android:includeFontPadding="false"
                     android:text="Cancel"
                     android:textColor="#D32F2F"
-                    android:textSize="11sp"
                     app:icon="@drawable/ic_stop"
-                    app:iconSize="14dp"
+                    app:iconSize="16dp"
                     app:iconTint="#D32F2F"
                     android:visibility="gone" />
             </LinearLayout>
@@ -232,8 +233,6 @@
                 android:text="Ready for build commands."
                 android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="11sp"
-                android:fontFamily="monospace"
                 android:singleLine="true"
                 android:ellipsize="middle" />
         </LinearLayout>
@@ -272,48 +271,52 @@
             android:id="@+id/btnPinLog"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingStart="8dp"
-            android:paddingEnd="10dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="36dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="0dp"
+            android:textSize="12sp"
+            android:includeFontPadding="false"
             android:text="Pin"
-            android:textSize="11sp"
             android:singleLine="true"
             app:icon="@drawable/ic_pin"
-            app:iconSize="14dp" />
+            app:iconSize="16dp" />
 
         <!-- Search button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSearchLog"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:icon="@drawable/ic_search"
-            app:iconSize="16dp" />
+            app:iconSize="20dp" />
 
         <!-- Copy button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCopyLog"
             style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="2dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:icon="@drawable/ic_copy"
-            app:iconSize="16dp" />
+            app:iconSize="20dp" />
 
         <!-- Clear button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnClearLog"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:textSize="11sp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="36dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="0dp"
+            android:textSize="12sp"
+            android:includeFontPadding="false"
             android:text="Clear"
             android:singleLine="true" />
     </LinearLayout>
@@ -336,26 +339,23 @@
                 android:id="@+id/chipFilterAll"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
-                android:layout_height="30dp"
+                android:layout_height="wrap_content"
                 android:text="All Logs"
-                android:textSize="11sp"
                 android:checked="true" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipFilterErrors"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:text="Errors (!!)"
-                android:textSize="11sp" />
+                android:layout_height="wrap_content"
+                android:text="Errors (!!)" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipFilterTasks"
                 style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
-                android:layout_height="30dp"
-                android:text="Tasks (>>)"
-                android:textSize="11sp" />
+                android:layout_height="wrap_content"
+                android:text="Tasks (>>)" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 

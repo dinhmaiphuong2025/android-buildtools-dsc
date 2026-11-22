@@ -345,25 +345,25 @@ class DashboardFragment : Fragment() {
     private fun updateSystemInfo() {
         val ctx = context ?: return
 
-        tvDeviceModel.text = "📱 ${Build.MODEL} (API ${Build.VERSION.SDK_INT})"
+        tvDeviceModel.text = "Device: ${Build.MODEL} (API ${Build.VERSION.SDK_INT})"
 
         val actManager = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memInfo = ActivityManager.MemoryInfo()
         actManager.getMemoryInfo(memInfo)
         val availRam = memInfo.availMem / (1024 * 1024)
-        tvDeviceRam.text = "⚡ RAM: ${availRam}MB"
+        tvDeviceRam.text = "RAM: ${availRam}MB"
 
         try {
             val stat = StatFs(ctx.filesDir.absolutePath)
             val availBytes = stat.availableBlocksLong * stat.blockSizeLong
             val availGB = String.format("%.1f", availBytes / (1024.0 * 1024.0 * 1024.0))
-            tvDeviceStorage.text = "💾 Disk: ${availGB}GB"
+            tvDeviceStorage.text = "Storage: ${availGB}GB"
         } catch (_: Exception) {
-            tvDeviceStorage.text = "💾 Disk: --"
+            tvDeviceStorage.text = "Storage: --"
         }
 
         val installedCount = ToolRepository.tools.count { it.isInstalled(ctx.filesDir) }
-        tvDeviceTools.text = "🧰 Tools: $installedCount/${ToolRepository.tools.size}"
+        tvDeviceTools.text = "Tools: $installedCount/${ToolRepository.tools.size}"
     }
 
     fun updateDaemonStatus(active: Boolean) {

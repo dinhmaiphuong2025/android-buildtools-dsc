@@ -34,32 +34,28 @@
                 android:singleLine="true"
                 android:ellipsize="end" />
 
-            <!-- Status Pill Badge (Fixed height & singleLine, NEVER wraps) -->
+            <!-- Status Indicator -->
             <LinearLayout
                 android:id="@+id/layoutStatusBadge"
                 android:layout_width="wrap_content"
-                android:layout_height="24dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/badge_uninstalled_bg"
                 android:gravity="center_vertical"
-                android:paddingStart="8dp"
-                android:paddingEnd="10dp"
                 android:orientation="horizontal">
 
                 <View
                     android:id="@+id/viewStatusDot"
-                    android:layout_width="6dp"
-                    android:layout_height="6dp"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
                     android:background="@drawable/dot_uninstalled" />
 
                 <TextView
                     android:id="@+id/tvStatusText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
+                    android:layout_marginStart="6dp"
                     android:text="Not installed"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
                     android:singleLine="true"
                     android:textColor="#757575" />
             </LinearLayout>
@@ -100,39 +96,41 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="320 MB"
-                android:textSize="11sp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
                 android:textColor="?attr/colorOnSurfaceVariant"
-                android:fontFamily="monospace"
                 android:singleLine="true" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDelete"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:minHeight="0dp"
-                android:minWidth="0dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minHeight="36dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="0dp"
+                android:textSize="12sp"
+                android:includeFontPadding="false"
                 android:text="Delete"
-                android:textSize="11sp"
                 android:textColor="?attr/colorError"
-                android:singleLine="true"
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAction"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:minHeight="0dp"
-                android:minWidth="64dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minHeight="36dp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="0dp"
+                android:textSize="12sp"
+                android:includeFontPadding="false"
                 android:layout_marginStart="6dp"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:singleLine="true"
                 android:text="Install" />
         </LinearLayout>
 
