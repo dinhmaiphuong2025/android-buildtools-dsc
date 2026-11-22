@@ -21,6 +21,7 @@ class ToolAdapter(
         val tvTitle: TextView = view.findViewById(R.id.tvToolTitle)
         val tvDesc: TextView = view.findViewById(R.id.tvToolDesc)
         val tvToolSize: TextView = view.findViewById(R.id.tvToolSize)
+        val layoutStatusBadge: View = view.findViewById(R.id.layoutStatusBadge)
         val viewStatusDot: View = view.findViewById(R.id.viewStatusDot)
         val tvStatusText: TextView = view.findViewById(R.id.tvStatusText)
         val progress: LinearProgressIndicator = view.findViewById(R.id.progressIndicator)
@@ -37,15 +38,16 @@ class ToolAdapter(
         val tool = tools[position]
         holder.tvTitle.text = tool.title
         holder.tvDesc.text = tool.description
-        holder.tvToolSize.text = tool.sizeText
+        holder.tvToolSize.text = "📦 ${tool.sizeText}"
 
         val installed = tool.isInstalled(filesDir)
 
         when (tool.status) {
             ToolStatus.DOWNLOADING, ToolStatus.EXTRACTING -> {
+                holder.layoutStatusBadge.setBackgroundResource(R.drawable.badge_building_bg)
                 holder.viewStatusDot.setBackgroundResource(R.drawable.dot_processing)
-                holder.tvStatusText.text = "Processing ${tool.progress}%"
-                holder.tvStatusText.setTextColor(Color.parseColor("#F57C00"))
+                holder.tvStatusText.text = if (tool.progress > 0) "${tool.progress}%" else "Extracting"
+                holder.tvStatusText.setTextColor(Color.parseColor("#E65100"))
                 holder.progress.visibility = View.VISIBLE
                 holder.progress.isIndeterminate = (tool.progress == 0)
                 if (tool.progress > 0) {
@@ -58,12 +60,14 @@ class ToolAdapter(
                 holder.progress.visibility = View.GONE
                 holder.btnAction.isEnabled = true
                 if (installed) {
+                    holder.layoutStatusBadge.setBackgroundResource(R.drawable.badge_idle_bg)
                     holder.viewStatusDot.setBackgroundResource(R.drawable.dot_installed)
                     holder.tvStatusText.text = "Installed"
                     holder.tvStatusText.setTextColor(Color.parseColor("#2E7D32"))
                     holder.btnAction.text = "Reinstall"
                     holder.btnDelete.visibility = View.VISIBLE
                 } else {
+                    holder.layoutStatusBadge.setBackgroundResource(R.drawable.badge_uninstalled_bg)
                     holder.viewStatusDot.setBackgroundResource(R.drawable.dot_uninstalled)
                     holder.tvStatusText.text = "Not installed"
                     holder.tvStatusText.setTextColor(Color.parseColor("#757575"))

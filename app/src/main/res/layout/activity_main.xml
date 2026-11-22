@@ -65,14 +65,15 @@
                 android:id="@+id/tvNavHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:text="Dashboard"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
+                android:singleLine="true"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
 
-        <!-- Tab 2: Tool Packages -->
+        <!-- Tab 2: Tools -->
         <LinearLayout
             android:id="@+id/btnNavTools"
             android:layout_width="0dp"
@@ -86,8 +87,8 @@
 
             <ImageView
                 android:id="@+id/ivNavTools"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_build"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -95,9 +96,10 @@
                 android:id="@+id/tvNavTools"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Tool Packages"
-                android:textSize="13sp"
+                android:layout_marginStart="6dp"
+                android:text="Tools"
+                android:textSize="12sp"
+                android:singleLine="true"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
 
@@ -115,8 +117,8 @@
 
             <ImageView
                 android:id="@+id/ivNavSettings"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_settings"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -124,9 +126,10 @@
                 android:id="@+id/tvNavSettings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:text="Settings"
-                android:textSize="13sp"
+                android:textSize="12sp"
+                android:singleLine="true"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
     </LinearLayout>

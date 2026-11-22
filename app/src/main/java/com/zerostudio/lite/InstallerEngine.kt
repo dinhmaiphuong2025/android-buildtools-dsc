@@ -123,15 +123,23 @@ object InstallerEngine {
         }
 
         try {
-            onLog(">> Extracting archive...")
             val extractSuccess = when (tool.archiveType) {
                 ArchiveType.ZIP -> {
-                    val strip = if (tool.id == "ndk_29") 1 else 0
+                    val strip = when (tool.id) {
+                        "ndk_29" -> 1
+                        "cmdline_tools" -> 1
+                        "gradle_8_11" -> 1
+                        else -> 0
+                    }
                     extractZip(archiveToExtract!!, targetDir, strip, onLog)
                 }
                 ArchiveType.TAR_GZ -> extractTarGz(archiveToExtract!!, targetDir, stripPaths = 1, onLog)
                 ArchiveType.TAR_XZ -> {
-                    val strip = if (tool.id == "build_tools_36") 2 else 0
+                    val strip = when (tool.id) {
+                        "build_tools_36" -> 2
+                        "cmake_326" -> 1
+                        else -> 0
+                    }
                     extractTarXz(archiveToExtract!!, targetDir, stripPaths = strip, onLog)
                 }
                 else -> true
@@ -142,6 +150,7 @@ object InstallerEngine {
             }
 
             if (extractSuccess) {
+                autoFixNestedExtraction(filesDir, tool, onLog)
                 makeExecutables(targetDir)
                 onLog(">> Installation finished: ${tool.title}!")
                 return@withContext true
@@ -310,6 +319,30 @@ object InstallerEngine {
                 f.setExecutable(true, false)
                 try {
                     Runtime.getRuntime().exec(arrayOf("chmod", "+x", f.absolutePath))
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private fun autoFixNestedExtraction(filesDir: File, tool: ToolItem, onLog: (String) -> Unit) {
+        val expected = File(filesDir, tool.verifyRelativePath)
+        if (expected.exists()) return
+
+        val targetDir = File(filesDir, tool.targetDirName)
+        if (!targetDir.exists() || !targetDir.isDirectory) return
+
+        val verifyFileName = expected.name
+        val found = targetDir.walkTopDown().maxDepth(4).firstOrNull { it.name == verifyFileName }
+        if (found != null && found.parentFile != null) {
+            onLog(">> Found ${verifyFileName} at ${found.absolutePath}, adjusting path...")
+            expected.parentFile?.mkdirs()
+            try {
+                android.system.Os.symlink(found.absolutePath, expected.absolutePath)
+                onLog(">> Linked ${expected.name} successfully.")
+            } catch (_: Exception) {
+                try {
+                    found.copyTo(expected, overwrite = true)
+                    expected.setExecutable(true, false)
                 } catch (_: Exception) {}
             }
         }

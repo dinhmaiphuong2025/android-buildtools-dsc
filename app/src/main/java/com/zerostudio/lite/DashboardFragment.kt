@@ -38,7 +38,10 @@ class DashboardFragment : Fragment() {
     private lateinit var viewDaemonDot: View
     private lateinit var tvDaemonStatus: TextView
     private lateinit var tvDaemonEndpoint: TextView
-    private lateinit var tvDeviceInfo: TextView
+    private lateinit var tvDeviceModel: TextView
+    private lateinit var tvDeviceRam: TextView
+    private lateinit var tvDeviceStorage: TextView
+    private lateinit var tvDeviceTools: TextView
 
     // Live Build Monitor views
     private lateinit var tvBuildStateBadge: TextView
@@ -92,7 +95,10 @@ class DashboardFragment : Fragment() {
         viewDaemonDot = view.findViewById(R.id.viewDaemonDot)
         tvDaemonStatus = view.findViewById(R.id.tvDaemonStatus)
         tvDaemonEndpoint = view.findViewById(R.id.tvDaemonEndpoint)
-        tvDeviceInfo = view.findViewById(R.id.tvDeviceInfo)
+        tvDeviceModel = view.findViewById(R.id.tvDeviceModel)
+        tvDeviceRam = view.findViewById(R.id.tvDeviceRam)
+        tvDeviceStorage = view.findViewById(R.id.tvDeviceStorage)
+        tvDeviceTools = view.findViewById(R.id.tvDeviceTools)
 
         tvBuildStateBadge = view.findViewById(R.id.tvBuildStateBadge)
         tvBuildElapsed = view.findViewById(R.id.tvBuildElapsed)
@@ -338,31 +344,26 @@ class DashboardFragment : Fragment() {
 
     private fun updateSystemInfo() {
         val ctx = context ?: return
-        val sb = StringBuilder()
 
-        // Device model & Android API
-        sb.append("${Build.MANUFACTURER} ${Build.MODEL} (Android ${Build.VERSION.RELEASE}, API ${Build.VERSION.SDK_INT}) • ")
+        tvDeviceModel.text = "📱 ${Build.MODEL} (API ${Build.VERSION.SDK_INT})"
 
-        // RAM info
         val actManager = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memInfo = ActivityManager.MemoryInfo()
         actManager.getMemoryInfo(memInfo)
         val availRam = memInfo.availMem / (1024 * 1024)
-        sb.append("RAM: ${availRam}MB free • ")
+        tvDeviceRam.text = "⚡ RAM: ${availRam}MB"
 
-        // Storage info
         try {
             val stat = StatFs(ctx.filesDir.absolutePath)
             val availBytes = stat.availableBlocksLong * stat.blockSizeLong
             val availGB = String.format("%.1f", availBytes / (1024.0 * 1024.0 * 1024.0))
-            sb.append("Disk: ${availGB}GB free • ")
-        } catch (_: Exception) {}
+            tvDeviceStorage.text = "💾 Disk: ${availGB}GB"
+        } catch (_: Exception) {
+            tvDeviceStorage.text = "💾 Disk: --"
+        }
 
-        // Tools count
         val installedCount = ToolRepository.tools.count { it.isInstalled(ctx.filesDir) }
-        sb.append("Tools: $installedCount/${ToolRepository.tools.size}")
-
-        tvDeviceInfo.text = sb.toString()
+        tvDeviceTools.text = "🧰 Tools: $installedCount/${ToolRepository.tools.size}"
     }
 
     fun updateDaemonStatus(active: Boolean) {

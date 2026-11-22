@@ -54,27 +54,90 @@ data class ToolItem(
 ) {
     fun isInstalled(baseFilesDir: File): Boolean {
         val checkFile = File(baseFilesDir, verifyRelativePath)
+        if (checkFile.exists()) return true
+
         if (id == "jdk17") {
-            if (checkFile.exists() && isBionicElf(checkFile)) return true
             val defaultHome = File(baseFilesDir, "usr/opt/openjdk-17")
+            if (File(defaultHome, "bin/java").exists()) return true
             val subdirs = defaultHome.listFiles { f -> f.isDirectory } ?: emptyArray()
             for (sub in subdirs) {
-                val subJava = File(sub, "bin/java")
-                if (subJava.exists() && isBionicElf(subJava)) return true
+                if (File(sub, "bin/java").exists()) return true
             }
             return false
         }
-        if (checkFile.exists()) return true
+
         if (id == "build_tools_36") {
-            val nestedCheck = File(baseFilesDir, "android-sdk/build-tools/36.0.0/build-tools/36.0.0/zipalign")
-            if (nestedCheck.exists()) return true
+            if (File(baseFilesDir, "android-sdk/build-tools/36.0.0/build-tools/36.0.0/zipalign").exists()) return true
+            if (File(baseFilesDir, "android-sdk/build-tools/36.0.0/aapt2").exists()) return true
+            if (File(baseFilesDir, "android-sdk/build-tools/36.0.0/zipalign").exists()) return true
+            return false
         }
+
         if (id == "ndk_29") {
-            val oldNdk = File(baseFilesDir, "android-sdk/ndk/29.0.14033849/source.properties")
-            if (oldNdk.exists()) return true
-            val nestedZipNdk = File(baseFilesDir, "android-sdk/ndk/29.0.13113456/android-ndk-r29-beta1/source.properties")
-            if (nestedZipNdk.exists()) return true
+            if (File(baseFilesDir, "android-sdk/ndk/29.0.14033849/source.properties").exists()) return true
+            if (File(baseFilesDir, "android-sdk/ndk/29.0.13113456/android-ndk-r29-beta1/source.properties").exists()) return true
+            if (File(baseFilesDir, "android-sdk/ndk/29.0.13113456/source.properties").exists()) return true
+            val ndkDir = File(baseFilesDir, "android-sdk/ndk")
+            if (ndkDir.exists()) {
+                val found = ndkDir.walkTopDown().maxDepth(4).any { it.name == "source.properties" }
+                if (found) return true
+            }
+            return false
         }
+
+        if (id == "cmdline_tools") {
+            if (File(baseFilesDir, "android-sdk/cmdline-tools/latest/cmdline-tools/bin/sdkmanager").exists()) return true
+            if (File(baseFilesDir, "android-sdk/cmdline-tools/bin/sdkmanager").exists()) return true
+            if (File(baseFilesDir, "android-sdk/cmdline-tools/latest/bin/sdkmanager").exists()) return true
+            val cmdDir = File(baseFilesDir, "android-sdk/cmdline-tools")
+            if (cmdDir.exists()) {
+                val found = cmdDir.walkTopDown().maxDepth(4).any { it.name == "sdkmanager" }
+                if (found) return true
+            }
+            return false
+        }
+
+        if (id == "gradle_8_11") {
+            if (File(baseFilesDir, "gradle-dist/gradle-8.11.1/gradle-8.11.1/bin/gradle").exists()) return true
+            if (File(baseFilesDir, "gradle-dist/bin/gradle").exists()) return true
+            if (File(baseFilesDir, "gradle-dist/gradle-8.11.1/bin/gradle").exists()) return true
+            val gradleDir = File(baseFilesDir, "gradle-dist")
+            if (gradleDir.exists()) {
+                val found = gradleDir.walkTopDown().maxDepth(4).any { it.name == "gradle" && it.isFile }
+                if (found) return true
+            }
+            return false
+        }
+
+        if (id == "cmake_326") {
+            val cmakeHome = File(baseFilesDir, "android-sdk/cmake/3.26.0")
+            if (File(cmakeHome, "bin/cmake").exists()) return true
+            val subdirs = cmakeHome.listFiles { f -> f.isDirectory } ?: emptyArray()
+            for (sub in subdirs) {
+                if (File(sub, "bin/cmake").exists()) return true
+            }
+            val cmakeParent = File(baseFilesDir, "android-sdk/cmake")
+            if (cmakeParent.exists()) {
+                val found = cmakeParent.walkTopDown().maxDepth(4).any { it.name == "cmake" && it.isFile }
+                if (found) return true
+            }
+            return false
+        }
+
+        if (category == ToolCategory.PLATFORMS) {
+            val platformsDir = File(baseFilesDir, "android-sdk/platforms")
+            if (platformsDir.exists()) {
+                val apiNum = id.removePrefix("platform_")
+                val found = platformsDir.listFiles()?.any { sub ->
+                    sub.isDirectory &&
+                    (sub.name == "android-$apiNum" || sub.name.startsWith("android-$apiNum.")) &&
+                    File(sub, "android.jar").exists()
+                } ?: false
+                if (found) return true
+            }
+            return false
+        }
+
         return false
     }
 }

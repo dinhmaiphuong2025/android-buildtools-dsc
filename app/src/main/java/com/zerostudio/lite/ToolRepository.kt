@@ -168,6 +168,19 @@ object ToolRepository {
         // SDK Platforms (additional)
         tools.add(
             ToolItem(
+                id = "platform_37",
+                title = "Android SDK Platform 37",
+                description = "Provides android.jar API 37 for projects targeting Android 16 QPR / Android 17 preview.",
+                sizeText = "68 MB",
+                downloadUrl = "https://dl.google.com/android/repository/platform-37.2_r02.zip",
+                archiveType = ArchiveType.ZIP,
+                targetDirName = "android-sdk/platforms",
+                verifyRelativePath = "android-sdk/platforms/android-37/android.jar",
+                category = ToolCategory.PLATFORMS
+            )
+        )
+        tools.add(
+            ToolItem(
                 id = "platform_36",
                 title = "Android SDK Platform 36",
                 description = "Provides android.jar API 36 for projects targeting Android 16.",
